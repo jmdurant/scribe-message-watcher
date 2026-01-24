@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "Scribe Message Watcher",
+  "version": "1.0",
+  "description": "Monitor and interact with Doximity Scribe messages.",
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "notifications",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.doximity.com/scribe/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.doximity.com/scribe",
+        "https://www.doximity.com/scribe/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+        "suggested_key": {
+            "default": "Alt+Comma"
+        },
+        "description": "Activate the extension popup"
+    },
+    "toggle-microphone": {
+      "suggested_key": {
+        "default": "Alt+M"
+      },
+      "description": "Toggle microphone record/pause/resume in Doximity Scribe tab"
+    },
+    "trigger-generate-note": {
+      "suggested_key": {
+        "default": "Alt+G"
+      },
+      "description": "Trigger the Generate Note button in Doximity Scribe"
+    },
+    "trigger-cancel-recording": {
+      "suggested_key": {
+        "default": "Alt+C"
+      },
+      "description": "Cancel/discard the current recording in Doximity Scribe"
+    }
+  }
+}

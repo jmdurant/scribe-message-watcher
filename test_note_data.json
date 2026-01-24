@@ -1,0 +1,31 @@
+{
+  "props": {
+    "visit_notes": [
+      {
+        "uuid": "d34bbc32-e5f2-466f-bcae-11e7ce99de6d",
+        "active_note": {
+          "uuid": "b9295fa6-7057-4037-b989-93f28aaa93da",
+          "workflow_state": "finished",
+          "tracking_type": "consult",
+          "created_at": "2025-04-16T12:44:12.308Z",
+          "library_note_type_uuid": "09248f4c-d3a3-42b3-b3d0-d87062bc6a6f",
+          "library_note_type": {
+            "uuid": "09248f4c-d3a3-42b3-b3d0-d87062bc6a6f",
+            "title": "Consult note",
+            "tracking_type": "consult",
+            "authored": false
+          },
+          "rating": null,
+          "temporary": false,
+          "label": "Consult Note",
+          "body": "This is the body of the consult note. It should appear in the extension."
+        },
+        "label": "Wed, 8:42AM",
+        "note_label": "Consult Note",
+        "duration_text": "<1 min",
+        "tracking_type": "consult",
+        "created_at": "2025-04-16T12:42:57.305Z"
+      }
+    ]
+  }
+}
