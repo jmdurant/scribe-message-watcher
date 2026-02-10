@@ -744,54 +744,6 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     }
     return true;
   }
-  if (msg.type === 'GET_NOTE_TYPES') {
-    const noteTypesContainer = document.querySelector('.visit-session-note-types-list');
-    if (noteTypesContainer) {
-      const noteTypes = Array.from(noteTypesContainer.querySelectorAll('.visit-session-note-types-list-item'))
-        .map(item => {
-          const span = item.querySelector('span');
-          return {
-            text: span ? span.textContent.trim() : '',
-            disabled: item.closest('[disabled="true"]') !== null
-          };
-        })
-        .filter(type => type.text);
-
-      debugLog('Found note types:', noteTypes);
-      sendResponse({ success: true, noteTypes });
-    } else {
-      debugLog('Note types container not found');
-      sendResponse({ success: false, error: 'Note types container not found' });
-    }
-    return true;
-  }
-  if (msg.type === 'CLICK_NOTE_TYPE') {
-    if (!msg.noteType) {
-      sendResponse({ success: false, error: 'No note type specified' });
-      return true;
-    }
-
-    const noteTypeItems = document.querySelectorAll('.visit-session-note-types-list-item');
-    let found = false;
-
-    for (const item of noteTypeItems) {
-      const span = item.querySelector('span');
-      if (span && span.textContent.trim() === msg.noteType && !item.closest('[disabled="true"]')) {
-        debugLog('Clicking note type:', msg.noteType);
-        item.click();
-        found = true;
-        break;
-      }
-    }
-
-    if (found) {
-      sendResponse({ success: true });
-    } else {
-      debugLog('Note type not found or disabled:', msg.noteType);
-      sendResponse({ success: false, error: 'Note type not found or disabled' });
-    }
-    return true;
-  }
 });
 
 function cacheVisitUuid(visitUuid) {

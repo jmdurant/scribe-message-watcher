@@ -677,111 +677,12 @@ function renderGenerateNoteButton() {
     findDoximityTab(function(tab) {
       if (tab) {
         safeSendMessage(tab.id, { type: 'CLICK_GENERATE_NOTE_BUTTON' }, function(response) {
-          setTimeout(() => {
-            safeSendMessage(tab.id, { type: 'GET_NOTE_TYPES' }, function(noteTypesResponse) {
-              if (noteTypesResponse && noteTypesResponse.success && noteTypesResponse.noteTypes && noteTypesResponse.noteTypes.length > 0) {
-                showNoteTypeOptions(tab.id, noteTypesResponse.noteTypes);
-              } else {
-                debugLog("Generate Note clicked, no note types to show — staying in background");
-              }
-            });
-          }, 500);
+          debugLog("Generate Note clicked, response:", response);
         });
       }
     });
   };
   genDiv.appendChild(btn);
-}
-
-function showNoteTypeOptions(tabId, noteTypes) {
-  hideLoading();
-  instructionsDiv.style.display = 'none';
-  notesListDiv.style.display = 'none';
-
-  const existingElements = [
-    document.getElementById('mic-selector-div'),
-    document.getElementById('mic-btn-div'),
-    document.getElementById('generate-note-div')
-  ];
-  existingElements.forEach(el => { if (el) el.remove(); });
-
-  const container = document.createElement('div');
-  container.id = 'note-types-container';
-  container.style.padding = '10px';
-
-  const title = document.createElement('h3');
-  title.textContent = 'Select Note Type';
-  title.style.textAlign = 'center';
-  title.style.margin = '0 0 15px 0';
-  title.style.color = '#1976d2';
-  container.appendChild(title);
-
-  noteTypes.forEach(noteType => {
-    const button = document.createElement('button');
-    button.textContent = noteType.text;
-    button.style.display = 'block';
-    button.style.width = '100%';
-    button.style.padding = '10px';
-    button.style.margin = '8px 0';
-    button.style.background = noteType.disabled ? '#f0f0f0' : '#ffffff';
-    button.style.color = noteType.disabled ? '#999' : '#1976d2';
-    button.style.border = '1px solid #ddd';
-    button.style.borderRadius = '4px';
-    button.style.textAlign = 'left';
-    button.style.fontSize = '1em';
-    button.style.cursor = noteType.disabled ? 'not-allowed' : 'pointer';
-    button.disabled = noteType.disabled;
-
-    if (!noteType.disabled) {
-      button.onmouseover = function() {
-        this.style.background = '#f5f9ff';
-        this.style.borderColor = '#1976d2';
-      };
-      button.onmouseout = function() {
-        this.style.background = '#ffffff';
-        this.style.borderColor = '#ddd';
-      };
-      button.onclick = function() {
-        safeSendMessage(tabId, {
-          type: 'CLICK_NOTE_TYPE',
-          noteType: noteType.text
-        }, function(response) {
-          if (response && response.success) {
-            window.close();
-          } else {
-            button.style.background = '#fff0f0';
-            button.style.borderColor = '#ff6b6b';
-            button.textContent = 'Error selecting ' + noteType.text;
-            setTimeout(() => {
-              button.style.background = '#ffffff';
-              button.style.borderColor = '#ddd';
-              button.textContent = noteType.text;
-            }, 2000);
-          }
-        });
-      };
-    }
-
-    container.appendChild(button);
-  });
-
-  const backButton = document.createElement('button');
-  backButton.textContent = 'Back';
-  backButton.style.display = 'block';
-  backButton.style.width = '50%';
-  backButton.style.margin = '20px auto 0';
-  backButton.style.padding = '8px';
-  backButton.style.background = '#f0f0f0';
-  backButton.style.border = '1px solid #ddd';
-  backButton.style.borderRadius = '4px';
-  backButton.style.cursor = 'pointer';
-  backButton.onclick = function() {
-    container.remove();
-    popupInit();
-  };
-  container.appendChild(backButton);
-
-  document.body.appendChild(container);
 }
 
 function showSnippetDialog(defaultName, folders, callback) {
