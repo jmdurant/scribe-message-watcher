@@ -11,6 +11,7 @@
     label { font-weight: bold; }
     .desc { color: #555; font-size: 0.97em; margin-bottom: 12px; }
     input[type="checkbox"] { margin-right: 8px; }
+    input[type="text"] { width: 100%; padding: 6px 8px; margin-top: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
     .save-status { color: #2C90ED; font-size: 0.97em; margin-top: 10px; display: none; }
   </style>
 </head>
@@ -24,14 +25,24 @@
   <div class="option-section">
     <label><input type="checkbox" id="dotexpander-integration-checkbox">Enable DotExpander Integration</label>
     <div class="desc">When enabled, shows "Save Snippet" button on notes to save content as a DotExpander snippet, and sends new dictations to DotExpander as the @dictation@ variable.</div>
+    <div style="margin-top: 10px;">
+      <label for="dotexpander-extension-id">DotExpander Extension ID:</label>
+      <input type="text" id="dotexpander-extension-id" placeholder="ljlmfclhdpcppglkaiieomhmpnfilagd">
+    </div>
     <div id="dotexpander-save-status" class="save-status">Saved!</div>
+  </div>
+  <!-- Debug Mode Section -->
+  <div class="option-section">
+    <label><input type="checkbox" id="debug-mode-checkbox">Enable Debug Logging</label>
+    <div class="desc">When enabled, detailed debug messages are logged to the browser console. Useful for troubleshooting.</div>
+    <div id="debug-save-status" class="save-status">Saved!</div>
   </div>
   <!-- Keyboard Shortcut Section -->
   <div class="option-section">
     <h3>Keyboard Shortcut</h3>
     <div class="desc">
       <b>Default Shortcut:</b> <span id="shortcut-default">Ctrl+Shift+S</span><br>
-      <span style="color:#888;font-size:0.96em;">If you have changed your shortcut in Chrome’s settings, the actual shortcut may be different.</span><br>
+      <span style="color:#888;font-size:0.96em;">If you have changed your shortcut in Chrome's settings, the actual shortcut may be different.</span><br>
       To change the shortcut, go to <b>chrome://extensions/shortcuts</b> in your browser and set your preferred key combination for this extension.
     </div>
   </div>
@@ -39,7 +50,7 @@
   <div class="option-section">
     <h3>About</h3>
     <div class="desc">
-      &copy; Doximity, Inc.<br>
+      Integrates with Doximity Scribe.<br>
       Extension created by James M DuRant III MD MBA (<a href="mailto:james@doctordurant.com">james@doctordurant.com</a>)<br>
       Developmental-Behavioral Pediatrician<br>
       <a href="https://developmentalondemand.com" target="_blank">https://developmentalondemand.com</a>

@@ -14,10 +14,15 @@
     "storage",
     "notifications",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [
-    "https://www.doximity.com/scribe/*"
+    "https://www.doximity.com/scribe/*",
+    "https://intakeq.com/*",
+    "https://*.intakeq.com/*",
+    "https://practiceq.com/*",
+    "https://*.practiceq.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -32,7 +37,17 @@
         "https://www.doximity.com/scribe",
         "https://www.doximity.com/scribe/*"
       ],
-      "js": ["content.js"],
+      "js": ["shared.js", "content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://intakeq.com/*",
+        "https://*.intakeq.com/*",
+        "https://practiceq.com/*",
+        "https://*.practiceq.com/*"
+      ],
+      "js": ["shared.js", "intakeq_content.js"],
       "run_at": "document_idle"
     }
   ],
