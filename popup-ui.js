@@ -685,6 +685,13 @@ function renderGenerateNoteButton() {
           debugLog("Generate Note clicked, response:", response);
           btn.textContent = 'Sent!';
           btn.style.background = '#4CAF50';
+          chrome.action.setBadgeText({ text: '\u2713' });
+          chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
+          chrome.action.setTitle({ title: 'Scribe Message Watcher - Generating Note' });
+          setTimeout(function() {
+            chrome.action.setBadgeText({ text: '' });
+            chrome.action.setTitle({ title: 'Scribe Message Watcher' });
+          }, 3000);
           setTimeout(function() { window.close(); }, 600);
         });
       }
