@@ -59,11 +59,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Add handler to open Chrome keyboard shortcuts page
-  var shortcutBtn = document.getElementById('open-shortcuts-settings');
-  if (shortcutBtn) {
-    shortcutBtn.addEventListener('click', function() {
-      window.open('chrome://extensions/shortcuts', '_blank');
+  // Load and display actual keyboard shortcuts from manifest
+  var shortcutsList = document.getElementById('shortcuts-list');
+  if (shortcutsList) {
+    chrome.commands.getAll(function(commands) {
+      var html = '<table style="width:100%;border-collapse:collapse;">';
+      commands.forEach(function(cmd) {
+        var shortcut = cmd.shortcut || '<em style="color:#999;">Not set</em>';
+        var name = cmd.description || cmd.name;
+        html += '<tr style="border-bottom:1px solid #eee;">';
+        html += '<td style="padding:4px 8px 4px 0;"><code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">' + shortcut + '</code></td>';
+        html += '<td style="padding:4px 0;">' + name + '</td>';
+        html += '</tr>';
+      });
+      html += '</table>';
+      shortcutsList.innerHTML = html;
     });
   }
 });
