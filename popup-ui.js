@@ -682,7 +682,7 @@ function renderGenerateNoteButton() {
               if (noteTypesResponse && noteTypesResponse.success && noteTypesResponse.noteTypes && noteTypesResponse.noteTypes.length > 0) {
                 showNoteTypeOptions(tab.id, noteTypesResponse.noteTypes);
               } else {
-                chrome.tabs.update(tab.id, { active: true });
+                debugLog("Generate Note clicked, no note types to show — staying in background");
               }
             });
           }, 500);
