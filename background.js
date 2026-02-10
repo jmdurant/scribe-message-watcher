@@ -26,23 +26,52 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     debugLog("NEW_MESSAGE received in background script");
     debugLog("Sender:", sender.tab ? sender.tab.url : "non-tab sender");
 
-    chrome.action.setBadgeText({ text: "NEW" });
-    chrome.action.setBadgeBackgroundColor({ color: "#2C90ED" });
-    chrome.action.setTitle({ title: "New message detected!" });
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icon-48.png",
-      title: "New Dictation Detected",
-      message: "A new dictation was detected in Doximity Scribe"
-    }, (notificationId) => {
-      debugLog("Notification created with ID:", notificationId);
-      if (chrome.runtime.lastError) {
-        console.error("Error creating notification:", chrome.runtime.lastError);
-      }
-    });
+    // Only notify if the Scribe tab is NOT the active tab — if the user
+    // is already looking at it, they don't need a notification.
+    if (sender.tab) {
+      chrome.tabs.get(sender.tab.id, (tab) => {
+        if (chrome.runtime.lastError || !tab) return;
 
-    // Sync note IDs so polling doesn't re-notify for this note
-    setTimeout(() => syncNoteIds(), 1500);
+        chrome.windows.get(tab.windowId, (win) => {
+          const isUserLooking = tab.active && win && win.focused;
+          debugLog("NEW_MESSAGE - tab active:", tab.active, "window focused:", win && win.focused);
+
+          if (!isUserLooking) {
+            chrome.action.setBadgeText({ text: "NEW" });
+            chrome.action.setBadgeBackgroundColor({ color: "#2C90ED" });
+            chrome.action.setTitle({ title: "New message detected!" });
+            chrome.notifications.create({
+              type: "basic",
+              iconUrl: "icon-48.png",
+              title: "New Dictation Detected",
+              message: "A new dictation was detected in Doximity Scribe"
+            }, (notificationId) => {
+              debugLog("Notification created with ID:", notificationId);
+              if (chrome.runtime.lastError) {
+                console.error("Error creating notification:", chrome.runtime.lastError);
+              }
+            });
+          } else {
+            debugLog("NEW_MESSAGE - Skipping notification, user is looking at Scribe tab");
+          }
+
+          // Sync note IDs either way
+          setTimeout(() => syncNoteIds(), 1500);
+        });
+      });
+    } else {
+      // No sender tab — show notification as fallback
+      chrome.action.setBadgeText({ text: "NEW" });
+      chrome.action.setBadgeBackgroundColor({ color: "#2C90ED" });
+      chrome.action.setTitle({ title: "New message detected!" });
+      chrome.notifications.create({
+        type: "basic",
+        iconUrl: "icon-48.png",
+        title: "New Dictation Detected",
+        message: "A new dictation was detected in Doximity Scribe"
+      });
+      setTimeout(() => syncNoteIds(), 1500);
+    }
 
     if (sendResponse) {
       sendResponse({ success: true });
