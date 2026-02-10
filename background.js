@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "SET_NOTES_URL" && msg.url) {
     NOTES_URL = msg.url;
     lastNoteIds = [];
-    checkForNewNotes();
+    syncNoteIds();
     sendResponse({ status: "ok" });
   }
 
@@ -24,13 +24,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   if (msg.type === "NEW_MESSAGE") {
     debugLog("NEW_MESSAGE received in background script");
-    debugLog("Sender information:", sender.tab ? sender.tab.url : "non-tab sender");
-    debugLog("Message details:",
-      msg.url ? "URL: " + msg.url : "No URL provided",
-      msg.navigationAware ? "Navigation-aware: true" : "",
-      msg.fromNavigation ? "From navigation: true" : "");
+    debugLog("Sender:", sender.tab ? sender.tab.url : "non-tab sender");
 
-    debugLog("Showing direct notification for NEW_MESSAGE event");
     chrome.action.setBadgeText({ text: "NEW" });
     chrome.action.setBadgeBackgroundColor({ color: "#2C90ED" });
     chrome.action.setTitle({ title: "New message detected!" });
@@ -40,130 +35,50 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       title: "New Dictation Detected",
       message: "A new dictation was detected in Doximity Scribe"
     }, (notificationId) => {
-      debugLog("Direct notification created with ID:", notificationId);
+      debugLog("Notification created with ID:", notificationId);
       if (chrome.runtime.lastError) {
-        console.error("Error creating direct notification:", chrome.runtime.lastError);
+        console.error("Error creating notification:", chrome.runtime.lastError);
       }
     });
 
-    const checkDelay = msg.fromNavigation ? 1500 : 500;
-    debugLog("Setting timeout for checkForNewNotes with delay:", checkDelay);
-    setTimeout(() => {
-      debugLog("Delayed checkForNewNotes starting after", checkDelay, "ms");
-      checkForNewNotes();
-    }, checkDelay);
+    // Sync note IDs so polling doesn't re-notify for this note
+    setTimeout(() => syncNoteIds(), 1500);
 
     if (sendResponse) {
-      sendResponse({ success: true, message: "NEW_MESSAGE received by background script" });
+      sendResponse({ success: true });
     }
     return true;
   }
 });
 
-function checkForNewNotes() {
-  debugLog("checkForNewNotes - Starting check for new notes");
+// Silently sync lastNoteIds so we stay up to date without firing notifications.
+// Notifications are only triggered by the NEW_MESSAGE path from the MutationObserver.
+function syncNoteIds() {
+  debugLog("syncNoteIds - Syncing note IDs");
 
   findDoximityTab((tab) => {
-    if (!tab) {
-      console.warn("No Scribe tab open or not logged in. Notifications paused.");
-      return;
-    }
-
-    debugLog("checkForNewNotes - Found Scribe tab:", tab.url);
+    if (!tab) return;
 
     chrome.tabs.get(tab.id, (updatedTab) => {
-      if (chrome.runtime.lastError) {
-        console.error("Error getting tab:", chrome.runtime.lastError);
-        return;
-      }
+      if (chrome.runtime.lastError || updatedTab.status !== "complete") return;
 
-      if (updatedTab.status !== "complete") {
-        debugLog("Tab is still loading, scheduling retry in 1 second");
-        setTimeout(() => checkForNewNotes(), 1000);
-        return;
-      }
-
-      debugLog("Sending FETCH_NOTES message to tab:", tab.id);
       chrome.tabs.sendMessage(tab.id, { type: 'FETCH_NOTES' }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error("Content script not found in Scribe tab:", chrome.runtime.lastError);
-          return;
-        }
-        if (!response || !response.success) {
-          console.error("Failed to fetch notes:", response && response.error);
-          return;
-        }
-
-        debugLog("checkForNewNotes - FETCH_NOTES response received successfully");
+        if (chrome.runtime.lastError || !response || !response.success) return;
 
         const data = response.data;
         const notes = (data.props && data.props.visit_notes) || [];
-        debugLog("checkForNewNotes - Notes count:", notes.length);
 
-        if (notes.length === 0) {
-          debugLog("checkForNewNotes - No notes found, skipping notification check");
-          return;
-        }
+        if (notes.length === 0) return;
 
         const noteIds = notes.map(n => n.uuid);
+        debugLog("syncNoteIds - Updated lastNoteIds, count:", noteIds.length);
+        lastNoteIds = noteIds;
 
-        debugLog("checkForNewNotes - Current noteIds:", noteIds);
-        debugLog("checkForNewNotes - Previous lastNoteIds:", lastNoteIds);
-
-        let newNoteDetected = false;
-
-        if (lastNoteIds.length && noteIds.length > 0 && noteIds[0] !== lastNoteIds[0]) {
-          debugLog("New note detected via first ID change");
-          newNoteDetected = true;
-        }
-
-        if (!newNoteDetected && noteIds.length > lastNoteIds.length) {
-          debugLog("New note detected via length increase - old length:", lastNoteIds.length, "new length:", noteIds.length);
-          newNoteDetected = true;
-        }
-
-        if (!newNoteDetected && lastNoteIds.length > 0) {
-          for (const id of noteIds) {
-            if (!lastNoteIds.includes(id)) {
-              debugLog("New note detected via new ID:", id);
-              newNoteDetected = true;
-              break;
-            }
-          }
-        }
-
-        if (lastNoteIds.length === 0 && noteIds.length > 0) {
-          debugLog("Initial notes detected, saving IDs without notification");
-          lastNoteIds = noteIds;
-          return;
-        }
-
-        if (newNoteDetected) {
+        // Send to DotExpander if a new note appeared and integration is enabled
+        if (lastNoteIds.length > 0) {
           const newNote = notes[0];
-          debugLog("NEW NOTE DETECTED:", newNote);
-
-          chrome.action.setBadgeText({ text: "NEW" });
-          chrome.action.setBadgeBackgroundColor({ color: "#2C90ED" });
-          chrome.action.setTitle({ title: "New message detected!" });
-
-          chrome.notifications.create({
-            type: "basic",
-            iconUrl: "icon-48.png",
-            title: "New Visit Note",
-            message: newNote?.note_label || "A new note has arrived."
-          }, (notificationId) => {
-            debugLog("Notification created with ID:", notificationId);
-            if (chrome.runtime.lastError) {
-              console.error("Error creating notification:", chrome.runtime.lastError);
-            }
-          });
-
-          // Send message to DotExpander (if integration is enabled)
           chrome.storage.sync.get(['dotExpanderIntegrationEnabled', 'dotExpanderExtensionId'], function(result) {
-            if (!result.dotExpanderIntegrationEnabled) {
-              debugLog("DotExpander integration disabled, skipping dictation send");
-              return;
-            }
+            if (!result.dotExpanderIntegrationEnabled) return;
 
             const dictationContent = newNote?.body || newNote?.content || newNote?.note_label || "No content available";
 
@@ -173,37 +88,27 @@ function checkForNewNotes() {
             if (potentialTsField) {
               if (typeof potentialTsField === 'string') {
                 const parsedTs = Date.parse(potentialTsField);
-                if (!isNaN(parsedTs)) {
-                  noteTimestamp = parsedTs;
-                }
+                if (!isNaN(parsedTs)) noteTimestamp = parsedTs;
               } else if (typeof potentialTsField === 'number') {
-                // Timestamps in seconds are < 1e10 (until ~2286); milliseconds are >= 1e10
                 noteTimestamp = potentialTsField < 1e10 ? potentialTsField * 1000 : potentialTsField;
               }
             }
 
             const targetExtensionId = result.dotExpanderExtensionId || 'ljlmfclhdpcppglkaiieomhmpnfilagd';
-            const messagePayload = {
+            chrome.runtime.sendMessage(targetExtensionId, {
               type: 'SEND_VARIABLES',
               variables: {
                 dictation: { value: dictationContent, timestamp: noteTimestamp }
               }
-            };
-
-            debugLog("Sending message to " + targetExtensionId + ":", messagePayload);
-
-            chrome.runtime.sendMessage(targetExtensionId, messagePayload, (response) => {
+            }, (response) => {
               if (chrome.runtime.lastError) {
-                console.error("Error sending message to " + targetExtensionId + ":", chrome.runtime.lastError.message);
+                console.error("Error sending to DotExpander:", chrome.runtime.lastError.message);
               } else {
-                debugLog("Response from " + targetExtensionId + ":", response);
+                debugLog("DotExpander response:", response);
               }
             });
           });
-        } else {
-          debugLog("No new notes detected - current first:", noteIds[0], "previous first:", lastNoteIds[0]);
         }
-        lastNoteIds = noteIds;
       });
     });
   });
@@ -221,7 +126,7 @@ function openScribeHomeAsPinnedTab() {
       chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
         if (tabId === tab.id && changeInfo.status === 'complete') {
           chrome.tabs.onUpdated.removeListener(listener);
-          checkForNewNotes();
+          syncNoteIds();
         }
       });
     });
@@ -240,7 +145,7 @@ let micCheckTimeout = null;
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'checkNotes') {
-    checkForNewNotes();
+    syncNoteIds();
   } else if (alarm.name === 'checkMicState') {
     checkMicStateAndUpdateIcon();
   }

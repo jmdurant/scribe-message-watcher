@@ -20,62 +20,27 @@ if (notesUuidMatch) {
   });
 }
 
-// Check if we detected a message on the previous page that didn't get processed due to navigation
-try {
-  const messageDetected = sessionStorage.getItem('scriberMessageDetected');
-  const messageTimestamp = sessionStorage.getItem('scriberMessageTimestamp');
+// Track elements that existed at page load so MutationObserver ignores them
+const _existingNoteElements = new Set();
+document.querySelectorAll('.scribe-text, .dictation-text, .note-text, .transcript-text').forEach(el => {
+  _existingNoteElements.add(el);
+});
+debugLog('Existing note elements at page load:', _existingNoteElements.size);
 
-  if (messageDetected === 'true' && messageTimestamp) {
-    const timestamp = parseInt(messageTimestamp, 10);
-    const now = Date.now();
-    if (!isNaN(timestamp) && (now - timestamp) < 10000) {
-      debugLog('Detected unprocessed message from previous page, notifying background');
-      sessionStorage.removeItem('scriberMessageDetected');
-      sessionStorage.removeItem('scriberMessageTimestamp');
-      setTimeout(() => {
-        chrome.runtime.sendMessage({
-          type: "NEW_MESSAGE",
-          url: window.location.href,
-          timestamp: now,
-          fromNavigation: true,
-          originalTimestamp: timestamp
-        });
-      }, 1000);
-    } else if (messageDetected === 'true') {
-      sessionStorage.removeItem('scriberMessageDetected');
-      sessionStorage.removeItem('scriberMessageTimestamp');
-    }
-  }
-} catch (e) {
-  console.error('Error checking sessionStorage:', e);
-}
+// Debounce notifyBackground so rapid DOM mutations don't send multiple notifications
+let _notifyDebounceTimer = null;
 
 function notifyBackground() {
+  if (_notifyDebounceTimer) return;
+  _notifyDebounceTimer = setTimeout(() => { _notifyDebounceTimer = null; }, 2000);
+
   debugLog("notifyBackground - New message detected, sending NEW_MESSAGE to background script");
   debugLog("Current URL:", window.location.href);
-
-  const noteElements = document.querySelectorAll('.scribe-text, .dictation-text, .note-text, .transcript-text');
-  debugLog("Found note elements:", noteElements.length);
-
-  if (noteElements.length > 0) {
-    const firstNoteElem = noteElements[0];
-    const noteText = firstNoteElem.textContent.substring(0, 100);
-    debugLog("First note element content preview:", noteText);
-    debugLog("First note element classes:", firstNoteElem.className);
-  }
-
-  try {
-    sessionStorage.setItem('scriberMessageDetected', 'true');
-    sessionStorage.setItem('scriberMessageTimestamp', Date.now().toString());
-  } catch (e) {
-    console.error('Error setting sessionStorage:', e);
-  }
 
   chrome.runtime.sendMessage({
     type: "NEW_MESSAGE",
     url: window.location.href,
-    timestamp: Date.now(),
-    navigationAware: true
+    timestamp: Date.now()
   }, (response) => {
     if (chrome.runtime.lastError) {
       console.error("Error sending NEW_MESSAGE:", chrome.runtime.lastError);
@@ -103,40 +68,30 @@ const observer = new MutationObserver((mutations) => {
   }
 
   for (const mutation of mutations) {
-    if (
-      mutation.type === "childList" &&
-      [...mutation.addedNodes].some(
+    if (mutation.type === "childList") {
+      const newNoteNodes = [...mutation.addedNodes].filter(
         (node) =>
           node.nodeType === 1 &&
           node.classList &&
-          node.classList.contains("scribe-text")
-      )
-    ) {
-      debugLog("MutationObserver - Detected new scribe-text element added to DOM");
-      notifyBackground();
+          !_existingNoteElements.has(node) &&
+          (node.classList.contains("scribe-text") ||
+           node.classList.contains("dictation-text") ||
+           node.classList.contains("note-text") ||
+           node.classList.contains("transcript-text") ||
+           node.querySelector('.scribe-text, .dictation-text, .note-text, .transcript-text'))
+      );
+      if (newNoteNodes.length > 0) {
+        debugLog("MutationObserver - Detected new note element(s) added to DOM:", newNoteNodes.length);
+        notifyBackground();
+      }
     }
     if (
       mutation.type === "characterData" &&
       mutation.target.parentElement &&
-      mutation.target.parentElement.classList.contains("scribe-text")
+      mutation.target.parentElement.classList.contains("scribe-text") &&
+      !_existingNoteElements.has(mutation.target.parentElement)
     ) {
-      debugLog("MutationObserver - Detected characterData change in scribe-text element");
-      notifyBackground();
-    }
-
-    if (
-      mutation.type === "childList" &&
-      [...mutation.addedNodes].some(
-        (node) =>
-          node.nodeType === 1 &&
-          node.classList &&
-          (node.classList.contains("dictation-text") ||
-           node.classList.contains("note-text") ||
-           node.classList.contains("transcript-text") ||
-           node.querySelector('.scribe-text, .dictation-text, .note-text, .transcript-text'))
-      )
-    ) {
-      debugLog("MutationObserver - Detected new dictation text element with alternative class");
+      debugLog("MutationObserver - Detected characterData change in new scribe-text element");
       notifyBackground();
     }
   }
