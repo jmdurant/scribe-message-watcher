@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // _execute_action is Chrome's internal name for the extension icon/popup shortcut
         if (cmd.name === '_execute_action') {
           name = 'Open extension popup';
-          if (!cmd.shortcut) shortcut = '<code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">Alt+Comma</code> <em style="color:#999;">(set in chrome://extensions/shortcuts)</em>';
+          if (!cmd.shortcut) shortcut = 'Alt+Comma';
         }
         html += '<tr style="border-bottom:1px solid #eee;">';
         html += '<td style="padding:4px 8px 4px 0;"><code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">' + shortcut + '</code></td>';
