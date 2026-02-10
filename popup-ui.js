@@ -84,7 +84,7 @@ function renderNoNotesFound() {
           chrome.tabs.update(scribeTab.id, { active: true });
           window.close();
         } else {
-          chrome.tabs.create({ url: 'https://www.doximity.com/scribe/home', active: true });
+          chrome.tabs.create({ url: 'https://www.doximity.com/scribe/home', pinned: true, active: true });
         }
       });
     };

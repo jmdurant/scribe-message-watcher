@@ -209,25 +209,27 @@ function checkForNewNotes() {
   });
 }
 
-function openScribeHomeIfNotOpen() {
+// On startup, close any existing Doximity tabs and reopen Scribe as a pinned background tab.
+// This ensures a clean pinned state every time Chrome or the extension starts.
+function openScribeHomeAsPinnedTab() {
   chrome.tabs.query({}, (tabs) => {
     const scribeHomeUrl = 'https://www.doximity.com/scribe/home';
-    const alreadyOpen = tabs.some(tab => tab.url && tab.url.startsWith(scribeHomeUrl));
-    if (!alreadyOpen) {
-      chrome.tabs.create({ url: scribeHomeUrl, pinned: true, active: false }, function(tab) {
-        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
-          if (tabId === tab.id && changeInfo.status === 'complete') {
-            chrome.tabs.onUpdated.removeListener(listener);
-            checkForNewNotes();
-          }
-        });
+    const doximityTabs = tabs.filter(tab => tab.url && tab.url.includes('doximity.com'));
+    doximityTabs.forEach(tab => chrome.tabs.remove(tab.id));
+
+    chrome.tabs.create({ url: scribeHomeUrl, pinned: true, active: false }, function(tab) {
+      chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
+        if (tabId === tab.id && changeInfo.status === 'complete') {
+          chrome.tabs.onUpdated.removeListener(listener);
+          checkForNewNotes();
+        }
       });
-    }
+    });
   });
 }
 
 // Run this on extension load
-openScribeHomeIfNotOpen();
+openScribeHomeAsPinnedTab();
 
 // Use chrome.alarms instead of setInterval (MV3 service workers can be suspended)
 debugLog("Setting up chrome.alarms for polling");
