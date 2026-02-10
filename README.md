@@ -85,17 +85,17 @@ When enabled in options, the extension reads the patient currently open in Pract
 
 - Click **Cancel Notes** in the popup, or press `Alt+C`
 
-## Extension Icon & Badges
+## Extension Icon Badges
 
-The extension icon <img src="icon-32.png" alt="icon" width="16" height="16"> shows the current state at a glance via badge overlays:
+The extension icon shows the current state at a glance via badge overlays:
 
-| Badge | Icon | Meaning |
-|-------|------|---------|
-| Red dot `●` | <img src="icon-32.png" width="20"> | Recording in progress |
-| Orange pause `❚❚` | <img src="icon-32.png" width="20"> | Recording paused |
-| Green check `✓` | <img src="icon-32.png" width="20"> | Note generated (clears after 3s) |
-| Red X `✕` | <img src="icon-32.png" width="20"> | Recording cancelled (clears after 3s) |
-| Blue `NEW` | <img src="icon-32.png" width="20"> | New dictation available |
+| Badge | Meaning |
+|-------|---------|
+| :red_circle: `●` | Recording in progress |
+| :orange_circle: `❚❚` | Recording paused |
+| :green_circle: `✓` | Note generated (clears after 3s) |
+| :red_circle: `✕` | Recording cancelled (clears after 3s) |
+| :large_blue_circle: `NEW` | New dictation available |
 
 ## Options
 
