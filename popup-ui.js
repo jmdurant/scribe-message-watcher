@@ -57,6 +57,7 @@ function showInstructions(show, msg) {
 }
 
 function showStatus(msg, color) {
+  if (!statusDiv) return;
   statusDiv.textContent = msg;
   statusDiv.style.color = color;
 }
