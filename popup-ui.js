@@ -674,10 +674,17 @@ function renderGenerateNoteButton() {
   btn.style.fontSize = '1em';
   btn.style.cursor = 'pointer';
   btn.onclick = function() {
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    btn.style.background = '#90CAF9';
+    btn.style.cursor = 'default';
     findDoximityTab(function(tab) {
       if (tab) {
         safeSendMessage(tab.id, { type: 'CLICK_GENERATE_NOTE_BUTTON' }, function(response) {
           debugLog("Generate Note clicked, response:", response);
+          btn.textContent = 'Sent!';
+          btn.style.background = '#4CAF50';
+          setTimeout(function() { window.close(); }, 600);
         });
       }
     });
