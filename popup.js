@@ -202,6 +202,13 @@ stopNotesBtn.onclick = () => {
     if (tab) {
       debugLog('Sending TRIGGER_STOP_NOTES to tab:', tab.url);
       safeSendMessage(tab.id, { type: 'TRIGGER_STOP_NOTES' }, function() {
+        chrome.action.setBadgeText({ text: '\u2715' }); // ✕
+        chrome.action.setBadgeBackgroundColor({ color: '#d32f2f' });
+        chrome.action.setTitle({ title: 'Scribe Message Watcher - Cancelled' });
+        setTimeout(function() {
+          chrome.action.setBadgeText({ text: '' });
+          chrome.action.setTitle({ title: 'Scribe Message Watcher' });
+        }, 3000);
         forceNavigateToCachedVisitNotes(tab);
         reloadNotesListAndFetch(tab);
         window.close();
