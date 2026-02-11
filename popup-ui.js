@@ -568,6 +568,8 @@ function renderMicSelector(options, selected) {
   label.style.marginBottom = '4px';
   const select = document.createElement('select');
   select.style.width = '100%';
+
+  // Build options first, then apply saved preference
   options.forEach(opt => {
     const o = document.createElement('option');
     o.value = opt.value;
@@ -575,7 +577,25 @@ function renderMicSelector(options, selected) {
     if (opt.value === selected) o.selected = true;
     select.appendChild(o);
   });
+
+  // Restore saved preference if it exists in the available options
+  chrome.storage.local.get('savedMicDevice', function(result) {
+    if (result.savedMicDevice) {
+      const savedExists = options.some(opt => opt.value === result.savedMicDevice);
+      if (savedExists && result.savedMicDevice !== selected) {
+        select.value = result.savedMicDevice;
+        // Apply to the page as well
+        findDoximityTab(function(tab) {
+          if (tab) {
+            safeSendMessage(tab.id, { type: 'SET_MICROPHONE', value: result.savedMicDevice });
+          }
+        });
+      }
+    }
+  });
+
   select.onchange = function() {
+    chrome.storage.local.set({ savedMicDevice: select.value });
     findDoximityTab(function(tab) {
       if (tab) {
         safeSendMessage(tab.id, { type: 'SET_MICROPHONE', value: select.value });
@@ -612,6 +632,7 @@ function renderNoteTypeSelector(options, selected) {
   label.style.marginBottom = '4px';
   const select = document.createElement('select');
   select.style.width = '100%';
+
   options.forEach(opt => {
     const o = document.createElement('option');
     o.value = opt.value;
@@ -619,7 +640,24 @@ function renderNoteTypeSelector(options, selected) {
     if (opt.value === selected) o.selected = true;
     select.appendChild(o);
   });
+
+  // Restore saved preference if it exists in the available options
+  chrome.storage.local.get('savedNoteType', function(result) {
+    if (result.savedNoteType) {
+      const savedExists = options.some(opt => opt.value === result.savedNoteType);
+      if (savedExists && result.savedNoteType !== selected) {
+        select.value = result.savedNoteType;
+        findDoximityTab(function(tab) {
+          if (tab) {
+            safeSendMessage(tab.id, { type: 'SET_NOTE_TYPE', value: result.savedNoteType });
+          }
+        });
+      }
+    }
+  });
+
   select.onchange = function() {
+    chrome.storage.local.set({ savedNoteType: select.value });
     findDoximityTab(function(tab) {
       if (tab) {
         safeSendMessage(tab.id, { type: 'SET_NOTE_TYPE', value: select.value });
@@ -656,19 +694,21 @@ function renderMicButton(micActive, isResume) {
   micBtnDiv.innerHTML = '';
   const btn = document.createElement('button');
   btn.style.background = '#fff';
-  btn.style.border = '1px solid #1976d2';
   btn.style.borderRadius = '50%';
   btn.style.width = '48px';
   btn.style.height = '48px';
   btn.style.cursor = 'pointer';
   if (micActive) {
     btn.title = 'Pause Microphone';
+    btn.style.border = '2px solid #d32f2f';
     btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 50 50" fill="#d32f2f" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 4h-7A4.505 4.505 0 0 0 5 8.5v33C5 43.981 7.019 46 9.5 46h7c2.481 0 4.5-2.019 4.5-4.5v-33C21 6.019 18.981 4 16.5 4zm24 0h-7A4.505 4.505 0 0 0 29 8.5v33c0 2.481 2.019 4.5 4.5 4.5h7c2.481 0 4.5-2.019 4.5-4.5v-33C45 6.019 42.981 4 40.5 4z"/></svg>';
   } else if (isResume) {
     btn.title = 'Resume Microphone';
-    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 50 50" fill="#1976d2" xmlns="http://www.w3.org/2000/svg"><path d="M25.001 34.017c5.514 0 10-4.486 10-10v-12c0-5.515-4.486-10-10-10s-10 4.485-10 10v12c0 5.514 4.486 10 10 10zm16.044-10.01a1.5 1.5 0 0 0-3 0c0 7.192-5.852 13.044-13.044 13.044s-13.044-5.852-13.044-13.044a1.5 1.5 0 0 0-3 0c0 8.34 6.399 15.208 14.544 15.968v6.508a1.5 1.5 0 0 0 3 0v-6.508c8.145-.76 14.544-7.628 14.544-15.968z"/></svg>';
+    btn.style.border = '2px solid #ff9800';
+    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 50 50" fill="#ff9800" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 4h-7A4.505 4.505 0 0 0 5 8.5v33C5 43.981 7.019 46 9.5 46h7c2.481 0 4.5-2.019 4.5-4.5v-33C21 6.019 18.981 4 16.5 4zm24 0h-7A4.505 4.505 0 0 0 29 8.5v33c0 2.481 2.019 4.5 4.5 4.5h7c2.481 0 4.5-2.019 4.5-4.5v-33C45 6.019 42.981 4 40.5 4z"/></svg>';
   } else {
     btn.title = 'Activate Microphone';
+    btn.style.border = '1px solid #1976d2';
     btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 50 50" fill="#1976d2" xmlns="http://www.w3.org/2000/svg"><path d="M25.001 34.017c5.514 0 10-4.486 10-10v-12c0-5.515-4.486-10-10-10s-10 4.485-10 10v12c0 5.514 4.486 10 10 10zm16.044-10.01a1.5 1.5 0 0 0-3 0c0 7.192-5.852 13.044-13.044 13.044s-13.044-5.852-13.044-13.044a1.5 1.5 0 0 0-3 0c0 8.34 6.399 15.208 14.544 15.968v6.508a1.5 1.5 0 0 0 3 0v-6.508c8.145-.76 14.544-7.628 14.544-15.968z"/></svg>';
   }
   btn.onclick = function() {

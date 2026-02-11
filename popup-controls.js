@@ -33,6 +33,7 @@ function fetchMicSelector() {
           debugLog('No mic selector present (likely recording). Hiding mic selector div.');
           if (micDiv) micDiv.style.display = 'none';
         }
+        hideLoading();
         fetchNoteTypeSelector();
         syncMicStateAndRender();
         renderGenerateNoteButton();
@@ -119,6 +120,7 @@ function retryFetchMicSelector(maxRetries, interval) {
         safeSendMessage(tab.id, { type: 'GET_MICROPHONE_OPTIONS' }, function(response) {
           if (response && response.success && response.options && response.options.length > 0) {
             debugLog('renderMicSelector with options:', response.options.length, 'selected:', response.selected);
+            hideLoading();
             renderMicSelector(response.options, response.selected);
             fetchNoteTypeSelector();
             syncMicStateAndRender();
@@ -129,6 +131,7 @@ function retryFetchMicSelector(maxRetries, interval) {
             setTimeout(tryFetch, interval);
           } else {
             debugLog('Max retries reached, checking microphone permission...');
+            hideLoading();
             checkMicPermissionAndActivateTab(tab);
           }
         });

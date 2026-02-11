@@ -63,6 +63,74 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       pendingScrapeNotes = null;
     }
   }
+  // Keyboard shortcut: Alt+M toggled mic — switch popup to recording mode
+  if (msg.type === 'SHORTCUT_MIC_TOGGLED') {
+    const wasAlreadyRecording = (popupMode === 'recording');
+    if (!wasAlreadyRecording) {
+      popupMode = 'recording';
+      savePopupState();
+      takeNotesBtn.style.display = 'none';
+      stopNotesBtn.style.display = 'block';
+      clearNotesAndShowMicControls();
+      // Hide mic/note type selectors — by the time the shortcut fires
+      // the page has already moved past the setup screen into recording
+      const micDiv = document.getElementById('mic-selector-div');
+      const noteTypeDiv = document.getElementById('note-type-selector-div');
+      if (micDiv) micDiv.style.display = 'none';
+      if (noteTypeDiv) noteTypeDiv.style.display = 'none';
+    }
+    if (wasAlreadyRecording) {
+      // Already recording — page is loaded, just refresh the mic button state
+      setTimeout(() => syncMicStateAndRender(), 500);
+    } else {
+      // First entry — show controls with a loading spinner in the mic button area
+      // while we poll for the mic state (page may still be loading)
+      ensureControlDivsExist();
+      renderGenerateNoteButton();
+      const micBtnDiv = document.getElementById('mic-btn-div');
+      if (micBtnDiv) {
+        micBtnDiv.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:48px;">' +
+          '<div style="width:24px;height:24px;border:3px solid rgba(25,118,210,0.3);border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite;"></div>' +
+          '</div>';
+      }
+      setTimeout(() => {
+        pollMicStateAndRender(20, 500);
+      }, 500);
+    }
+  }
+  // Keyboard shortcut: Alt+G — show green check, then close popup
+  if (msg.type === 'SHORTCUT_GENERATE_NOTE') {
+    if (popupMode === 'recording') {
+      const micBtnDiv = document.getElementById('mic-btn-div');
+      if (micBtnDiv) {
+        micBtnDiv.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:48px;">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="#4CAF50" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+          '</div>';
+      }
+      const genDiv = document.getElementById('generate-note-div');
+      if (genDiv) {
+        const btn = genDiv.querySelector('button');
+        if (btn) { btn.textContent = 'Generating...'; btn.style.background = '#4CAF50'; btn.disabled = true; }
+      }
+      popupMode = 'notes';
+      savePopupState();
+      setTimeout(() => window.close(), 800);
+    }
+  }
+  // Keyboard shortcut: Alt+C — show red X, then close popup
+  if (msg.type === 'SHORTCUT_CANCEL_RECORDING') {
+    if (popupMode === 'recording') {
+      const micBtnDiv = document.getElementById('mic-btn-div');
+      if (micBtnDiv) {
+        micBtnDiv.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:48px;">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="#d32f2f" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+          '</div>';
+      }
+      popupMode = 'notes';
+      savePopupState();
+      setTimeout(() => window.close(), 800);
+    }
+  }
   if (msg.type === 'ACTIVATE_DOXIMITY_TAB') {
     chrome.tabs.query({ url: '*://www.doximity.com/scribe/*' }, (tabs) => {
       if (tabs.length > 0) {

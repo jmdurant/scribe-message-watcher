@@ -230,6 +230,9 @@ chrome.action.onClicked.addListener(() => {
 // Listen for the global keyboard shortcut to toggle the microphone
 chrome.commands.onCommand.addListener(function(command) {
   if (command === 'toggle-microphone') {
+    // Notify the popup (if open) to switch to recording mode
+    chrome.runtime.sendMessage({ type: 'SHORTCUT_MIC_TOGGLED' }).catch(() => {});
+
     function updateIconFromResponse(response) {
       if (response && response.success) {
         updateBadgeForMicState(response.micActive, response.isResume);
@@ -275,6 +278,9 @@ chrome.commands.onCommand.addListener(function(command) {
     });
   }
   else if (command === 'trigger-generate-note') {
+    // Notify the popup (if open) to switch back to notes mode
+    chrome.runtime.sendMessage({ type: 'SHORTCUT_GENERATE_NOTE' }).catch(() => {});
+
     chrome.tabs.query({}, (tabs) => {
       let targetTab = tabs.find(tab => tab.url && tab.url.includes('doximity.com/scribe/visits/new'));
       if (!targetTab) {
@@ -305,6 +311,9 @@ chrome.commands.onCommand.addListener(function(command) {
     });
   }
   else if (command === 'trigger-cancel-recording') {
+    // Notify the popup (if open) to switch back to notes mode
+    chrome.runtime.sendMessage({ type: 'SHORTCUT_CANCEL_RECORDING' }).catch(() => {});
+
     chrome.tabs.query({}, (tabs) => {
       let targetTab = tabs.find(tab => tab.url && tab.url.includes('doximity.com/scribe/visits/new'));
       if (!targetTab) {
