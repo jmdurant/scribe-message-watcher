@@ -711,7 +711,7 @@ function renderMicButton(micActive, isResume) {
   } else if (isResume) {
     btn.title = 'Resume Microphone';
     btn.style.border = '2px solid #ff9800';
-    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 50 50" fill="#ff9800" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 4h-7A4.505 4.505 0 0 0 5 8.5v33C5 43.981 7.019 46 9.5 46h7c2.481 0 4.5-2.019 4.5-4.5v-33C21 6.019 18.981 4 16.5 4zm24 0h-7A4.505 4.505 0 0 0 29 8.5v33c0 2.481 2.019 4.5 4.5 4.5h7c2.481 0 4.5-2.019 4.5-4.5v-33C45 6.019 42.981 4 40.5 4z"/></svg>';
+    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="#ff9800" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
   } else {
     btn.title = 'Activate Microphone';
     btn.style.border = '1px solid #1976d2';
