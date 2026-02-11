@@ -97,6 +97,21 @@ The extension icon shows the current state at a glance via badge overlays:
 | :red_circle: `✕` | Recording cancelled (clears after 3s) |
 | :large_blue_circle: `NEW` | New dictation available |
 
+## Privacy & Data Handling
+
+This extension processes clinical dictation content. All patient health information (PHI) is stored in **session-only memory** using `chrome.storage.session` — nothing is written to disk.
+
+| Data | Storage | Persistence |
+|------|---------|-------------|
+| Note bodies (dictation text) | Session (memory) | Cleared when browser closes |
+| Cached notes list | Session (memory) | Cleared when browser closes |
+| Visit identifiers | Session (memory) | Cleared when browser closes |
+| Microphone preference | Local (disk) | Persists across restarts |
+| Note type preference | Local (disk) | Persists across restarts |
+| Extension settings | Chrome Sync | Syncs across devices |
+
+No PHI is transmitted to any server other than Doximity. The extension communicates only with the Doximity Scribe tab already open in your browser.
+
 ## Options
 
 Right-click the extension icon and select **Options** to configure:
@@ -129,6 +144,7 @@ These sit on the desk, pick up both provider and patient clearly, and don't requ
 | `popup-ui.js` | Popup rendering functions (notes list, mic controls, dialogs) |
 | `popup-notes.js` | Note fetching, caching, and template logic |
 | `popup-controls.js` | Microphone and recording control functions |
+| `offscreen.html` / `offscreen.js` | Offscreen document for clipboard access from notifications |
 | `options.html` / `options.js` | Extension settings page |
 
 ## Author
