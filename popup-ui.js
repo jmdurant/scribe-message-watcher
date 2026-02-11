@@ -144,85 +144,110 @@ function showNotes(notes, source) {
     }
   }
 
-  let openIdx = notes.findIndex(note => note.body_from_dom);
-  if (openIdx === -1) openIdx = 0;
+  // Only show displayedCount notes at a time
+  const visibleNotes = notes.slice(0, displayedCount);
+  debugLog('Showing', visibleNotes.length, 'of', notes.length, 'notes');
 
-  if (practiceQIntegrationEnabled) {
-    const renderedNotes = new Array(notes.length);
-    let completed = 0;
-    notes.forEach((note, idx) => {
-      const noteKey = note.uuid || note.label;
-      const hasBody = !!note.body_from_dom || !!allNoteBodies[noteKey];
-      let body = note.body_from_dom || allNoteBodies[noteKey] || '';
+  function renderVisibleNotes() {
+    if (practiceQIntegrationEnabled) {
+      const renderedNotes = new Array(visibleNotes.length);
+      let completed = 0;
+      visibleNotes.forEach((note, idx) => {
+        const noteKey = note.uuid || note.label;
+        const hasBody = !!note.body_from_dom || !!allNoteBodies[noteKey];
+        let body = note.body_from_dom || allNoteBodies[noteKey] || '';
 
-      let title = note.note_label || note.label || '';
-      if (note.body_from_cache && title.includes('Note') && title.includes('...')) {
-        const firstLine = body.split('\n')[0]?.trim();
-        if (firstLine && firstLine.length > 5 && firstLine.length < 100) {
-          title = firstLine;
-        }
-      }
-
-      if (hasBody) {
-        chrome.tabs.query({ url: '*://intakeq.com/#/client/*' }, (tabs) => {
-          if (tabs.length > 0) {
-            chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_CLIENT_DATA' }, (clientData) => {
-              if (clientData && isNoteInVisitWindow(title, clientData)) {
-                const filled = fillNoteTemplate(body, clientData);
-                renderedNotes[idx] = renderNoteDivElement(idx, filled, note, hasBody, title);
-              } else {
-                renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
-              }
-              completed++;
-              if (completed === notes.length) {
-                notesListDiv.innerHTML = '';
-                renderedNotes.forEach(el => { if (el) notesListDiv.appendChild(el); });
-              }
-            });
-          } else {
-            renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
-            completed++;
-            if (completed === notes.length) {
-              notesListDiv.innerHTML = '';
-              renderedNotes.forEach(el => { if (el) notesListDiv.appendChild(el); });
-            }
+        let title = note.note_label || note.label || '';
+        if (note.body_from_cache && title.includes('Note') && title.includes('...')) {
+          const firstLine = body.split('\n')[0]?.trim();
+          if (firstLine && firstLine.length > 5 && firstLine.length < 100) {
+            title = firstLine;
           }
-        });
-      } else {
-        renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
-        completed++;
-        if (completed === notes.length) {
-          notesListDiv.innerHTML = '';
-          renderedNotes.forEach(el => { if (el) notesListDiv.appendChild(el); });
         }
-      }
-    });
-  } else {
-    notes.forEach((note, idx) => {
-      const noteKey = note.uuid || note.label;
-      const hasBody = !!note.body_from_dom || !!allNoteBodies[noteKey];
-      let body = note.body_from_dom || allNoteBodies[noteKey] || '';
 
-      let title = note.note_label || note.label || '';
-      if (note.body_from_cache && title.includes('Note') && title.includes('...')) {
-        const firstLine = body.split('\n')[0]?.trim();
-        if (firstLine && firstLine.length > 5 && firstLine.length < 100) {
-          title = firstLine;
+        if (hasBody) {
+          chrome.tabs.query({ url: '*://intakeq.com/#/client/*' }, (tabs) => {
+            if (tabs.length > 0) {
+              chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_CLIENT_DATA' }, (clientData) => {
+                if (clientData && isNoteInVisitWindow(title, clientData)) {
+                  const filled = fillNoteTemplate(body, clientData);
+                  renderedNotes[idx] = renderNoteDivElement(idx, filled, note, hasBody, title);
+                } else {
+                  renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
+                }
+                completed++;
+                if (completed === visibleNotes.length) appendRendered(renderedNotes);
+              });
+            } else {
+              renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
+              completed++;
+              if (completed === visibleNotes.length) appendRendered(renderedNotes);
+            }
+          });
+        } else {
+          renderedNotes[idx] = renderNoteDivElement(idx, body, note, hasBody, title);
+          completed++;
+          if (completed === visibleNotes.length) appendRendered(renderedNotes);
         }
-      }
+      });
+    } else {
+      visibleNotes.forEach((note, idx) => {
+        const noteKey = note.uuid || note.label;
+        const hasBody = !!note.body_from_dom || !!allNoteBodies[noteKey];
+        let body = note.body_from_dom || allNoteBodies[noteKey] || '';
 
-      const el = renderNoteDivElement(idx, body, note, hasBody, title);
-      notesListDiv.appendChild(el);
-    });
+        let title = note.note_label || note.label || '';
+        if (note.body_from_cache && title.includes('Note') && title.includes('...')) {
+          const firstLine = body.split('\n')[0]?.trim();
+          if (firstLine && firstLine.length > 5 && firstLine.length < 100) {
+            title = firstLine;
+          }
+        }
+
+        const el = renderNoteDivElement(idx, body, note, hasBody, title);
+        notesListDiv.appendChild(el);
+      });
+      appendLoadMore();
+    }
   }
 
-  const srcDiv = document.createElement('div');
-  srcDiv.style.fontSize = '0.85em';
-  srcDiv.style.color = '#888';
-  srcDiv.style.marginTop = '6px';
-  srcDiv.textContent = 'Source: ' + (source === 'api' ? 'API' : 'DOM') + (notes.some(n => n.body_from_cache) ? ' (with cache fallback)' : '');
-  notesListDiv.appendChild(srcDiv);
-  setPopupHeightToFirstNote();
+  function appendRendered(renderedNotes) {
+    notesListDiv.innerHTML = '';
+    renderedNotes.forEach(el => { if (el) notesListDiv.appendChild(el); });
+    appendLoadMore();
+  }
+
+  function appendLoadMore() {
+    // Remove existing load more button if present
+    const existing = document.getElementById('load-more-btn');
+    if (existing) existing.remove();
+
+    if (displayedCount < notes.length) {
+      const remaining = notes.length - displayedCount;
+      const loadMoreBtn = document.createElement('button');
+      loadMoreBtn.id = 'load-more-btn';
+      loadMoreBtn.textContent = 'Load More (' + remaining + ' remaining)';
+      loadMoreBtn.style.width = '100%';
+      loadMoreBtn.style.padding = '8px';
+      loadMoreBtn.style.margin = '8px 0';
+      loadMoreBtn.style.background = '#f0f0f0';
+      loadMoreBtn.style.color = '#333';
+      loadMoreBtn.style.border = '1px solid #ddd';
+      loadMoreBtn.style.borderRadius = '4px';
+      loadMoreBtn.style.cursor = 'pointer';
+      loadMoreBtn.style.fontSize = '0.9em';
+      loadMoreBtn.onclick = function() {
+        displayedCount += 2;
+        showNotes(notes, source);
+        // Scrape bodies for newly visible notes if needed
+        scrapeVisibleIfMissing(notes);
+      };
+      notesListDiv.appendChild(loadMoreBtn);
+    }
+    setPopupHeightToFirstNote();
+  }
+
+  renderVisibleNotes();
 }
 
 function renderNoteDivElement(idx, body, note, hasBody, title) {

@@ -96,50 +96,16 @@ function fetchNotesAndShow() {
 
             window.lastNotes = notes;
 
-            const missing = notes.some(n => {
-              const key = n.uuid || n.label;
-              return !updatedCacheBodies[key];
-            });
-
             hideLoading();
 
             if (notes.length > 0) {
               showInstructions(false);
               debugLog('Calling showNotes immediately with cached bodies');
               showNotes(notes, response.source);
+              // Only scrape bodies for the currently displayed notes
+              scrapeVisibleIfMissing(notes);
             } else {
               renderNoNotesFound();
-            }
-
-            if (missing) {
-              debugLog('Missing bodies detected, sending SCRAPE_ALL_NOTE_BODIES for', notes.length, 'notes');
-              chrome.tabs.sendMessage(tab.id, { type: 'SCRAPE_ALL_NOTE_BODIES', notes }, function(resp) {
-                if (chrome.runtime.lastError) {
-                  debugLog('Error sending SCRAPE_ALL_NOTE_BODIES:', chrome.runtime.lastError);
-                  pendingScrapeNotes = notes;
-                  const statusMsg = document.createElement('div');
-                  statusMsg.textContent = 'Activate Doximity tab to load missing note bodies';
-                  statusMsg.style.position = 'fixed';
-                  statusMsg.style.bottom = '10px';
-                  statusMsg.style.left = '50%';
-                  statusMsg.style.transform = 'translateX(-50%)';
-                  statusMsg.style.background = 'rgba(0,0,0,0.7)';
-                  statusMsg.style.color = 'white';
-                  statusMsg.style.padding = '8px 12px';
-                  statusMsg.style.borderRadius = '4px';
-                  statusMsg.style.fontSize = '12px';
-                  statusMsg.style.zIndex = '9999';
-                  document.body.appendChild(statusMsg);
-                  setTimeout(() => {
-                    statusMsg.style.opacity = '0';
-                    statusMsg.style.transition = 'opacity 0.5s';
-                    setTimeout(() => statusMsg.remove(), 500);
-                  }, 3000);
-                } else {
-                  debugLog('SCRAPE_ALL_NOTE_BODIES sent successfully');
-                  showStatus('Scraping all note bodies...', '#2C90ED');
-                }
-              });
             }
           });
         });
@@ -164,6 +130,33 @@ function fetchNotesAndShow() {
             });
           };
         }
+      }
+    });
+  });
+}
+
+// Only scrape bodies for notes currently visible in the popup
+function scrapeVisibleIfMissing(notes) {
+  const visibleNotes = notes.slice(0, displayedCount);
+  const missingNotes = visibleNotes.filter(n => {
+    const key = n.uuid || n.label;
+    return !allNoteBodies[key] || allNoteBodies[key].length < 10;
+  });
+
+  if (missingNotes.length === 0) {
+    debugLog('All visible note bodies are cached, no scraping needed');
+    return;
+  }
+
+  debugLog('Scraping bodies for', missingNotes.length, 'visible notes');
+  findDoximityTab(function(tab) {
+    if (!tab) return;
+    chrome.tabs.sendMessage(tab.id, { type: 'SCRAPE_ALL_NOTE_BODIES', notes: missingNotes }, function(resp) {
+      if (chrome.runtime.lastError) {
+        debugLog('Error sending SCRAPE_ALL_NOTE_BODIES:', chrome.runtime.lastError);
+        pendingScrapeNotes = missingNotes;
+      } else {
+        debugLog('SCRAPE_ALL_NOTE_BODIES sent for visible notes');
       }
     });
   });
