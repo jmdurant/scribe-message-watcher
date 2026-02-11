@@ -258,8 +258,25 @@ function renderNoteDivElement(idx, body, note, hasBody, title) {
   div.style.borderRadius = '4px';
   div.style.border = hasBody ? '2px solid #2C90ED' : '1px solid #ddd';
   div.style.cursor = 'pointer';
+  div.style.position = 'relative';
 
   div.innerHTML = '<b>' + title + '</b><br><small>' + (note.created_at ? new Date(note.created_at).toLocaleString() : '') + '</small>';
+
+  if (!hasBody) {
+    const spinner = document.createElement('div');
+    spinner.className = 'note-loading-spinner';
+    spinner.setAttribute('data-note-key', note.uuid || note.label || '');
+    spinner.style.position = 'absolute';
+    spinner.style.top = '8px';
+    spinner.style.right = '8px';
+    spinner.style.width = '16px';
+    spinner.style.height = '16px';
+    spinner.style.border = '2px solid rgba(25, 118, 210, 0.3)';
+    spinner.style.borderTopColor = '#1976d2';
+    spinner.style.borderRadius = '50%';
+    spinner.style.animation = 'spin 1s linear infinite';
+    div.appendChild(spinner);
+  }
 
   if (hasBody) {
     div.innerHTML += '<br><pre style="white-space:pre-wrap;font-size:0.95em;margin:4px 0 0 0;">' + body.substring(0, 200) + (body.length > 200 ? '...' : '') + '</pre>';
