@@ -15,7 +15,9 @@
     "notifications",
     "activeTab",
     "scripting",
-    "alarms"
+    "alarms",
+    "offscreen",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "https://www.doximity.com/scribe/*",

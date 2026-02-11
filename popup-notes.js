@@ -51,63 +51,109 @@ function fetchNotesAndShow() {
         }
         debugLog('Sending FETCH_NOTES message to tab:', tab.id);
         chrome.tabs.sendMessage(tab.id, { type: 'FETCH_NOTES' }, function(response) {
-          if (!response || !response.success || !response.data) {
+          let freshNotes = [];
+          if (response && response.success && response.data) {
+            freshNotes = (response.data.props && response.data.props.visit_notes) || [];
+            debugLog('FETCH_NOTES success, source:', response.source, 'count:', freshNotes.length);
+          } else {
             debugLog('FETCH_NOTES failed or empty response:', response);
-            hideLoading();
-            showInstructions(true, 'Please log in to Doximity and open Scribe.');
-            notesListDiv.innerHTML = '';
-            return;
           }
-          debugLog('FETCH_NOTES success, source:', response.source);
-          let notes = (response.data.props && response.data.props.visit_notes) || [];
-          debugLog('Notes received count:', notes.length);
 
-          debugLog('Sending GET_CACHED_NOTE_BODIES message to tab:', tab.id);
-          chrome.tabs.sendMessage(tab.id, { type: 'GET_CACHED_NOTE_BODIES' }, function(cacheResp) {
-            let cacheBodies = (cacheResp && cacheResp.success && cacheResp.data) ? cacheResp.data : {};
-            debugLog('Cached note bodies received, keys:', Object.keys(cacheBodies).length);
+          // If we got notes from the page, cache the list as the source of truth
+          if (freshNotes.length > 0) {
+            chrome.storage.session.set({ cachedNotesList: freshNotes });
+          }
 
-            debugCacheKeyMismatch(notes, cacheBodies);
+          // Use fresh notes if available, otherwise load from cached list
+          function proceed(notes) {
+            debugLog('Proceeding with notes count:', notes.length);
 
-            const updatedCacheBodies = {...cacheBodies};
-            notes.forEach(note => {
-              const noteKey = note.uuid || note.label;
-              if (updatedCacheBodies[noteKey]) return;
-              const partialMatches = Object.keys(cacheBodies).filter(key =>
-                key.includes(noteKey) || noteKey.includes(key)
-              );
-              if (partialMatches.length > 0) {
-                debugLog('Found partial match for ' + noteKey + ':', partialMatches[0]);
-                updatedCacheBodies[noteKey] = cacheBodies[partialMatches[0]];
+            chrome.tabs.sendMessage(tab.id, { type: 'GET_CACHED_NOTE_BODIES' }, function(cacheResp) {
+              let cacheBodies = (cacheResp && cacheResp.success && cacheResp.data) ? cacheResp.data : {};
+              debugLog('Cached note bodies received, keys:', Object.keys(cacheBodies).length);
+
+              debugCacheKeyMismatch(notes, cacheBodies);
+
+              const updatedCacheBodies = {...cacheBodies};
+              notes.forEach(note => {
+                const noteKey = note.uuid || note.label;
+                if (updatedCacheBodies[noteKey]) return;
+                const partialMatches = Object.keys(cacheBodies).filter(key =>
+                  key.includes(noteKey) || noteKey.includes(key)
+                );
+                if (partialMatches.length > 0) {
+                  debugLog('Found partial match for ' + noteKey + ':', partialMatches[0]);
+                  updatedCacheBodies[noteKey] = cacheBodies[partialMatches[0]];
+                }
+              });
+
+              // Merge: if cacheBodies has UUIDs not in the notes list,
+              // add them (e.g. new notes detected via DOM but not yet in API response)
+              const noteUuids = new Set(notes.map(n => n.uuid || n.label));
+              Object.keys(updatedCacheBodies).forEach(cacheKey => {
+                if (!noteUuids.has(cacheKey)) {
+                  // Check partial matches too — skip if this key partially matches an existing note
+                  const hasPartial = notes.some(n => {
+                    const nk = n.uuid || n.label;
+                    return nk.includes(cacheKey) || cacheKey.includes(nk);
+                  });
+                  if (!hasPartial) {
+                    debugLog('Merging cached note not in list:', cacheKey);
+                    const now = new Date();
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const day = days[now.getDay()];
+                    let hours = now.getHours();
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const label = day + ', ' + hours + ':' + minutes + ampm;
+                    notes.unshift({
+                      uuid: cacheKey,
+                      note_label: label,
+                      created_at: now.toISOString(),
+                      _from_cache: true
+                    });
+                  }
+                }
+              });
+
+              allNoteBodies = updatedCacheBodies;
+              window.lastNotes = notes;
+
+              // Update cachedNotesList with any merged notes
+              if (notes.length > 0) {
+                chrome.storage.session.set({ cachedNotesList: notes });
+              }
+
+              hideLoading();
+
+              if (notes.length > 0) {
+                showInstructions(false);
+                debugLog('Calling showNotes with', notes.length, 'notes');
+                showNotes(notes, response ? response.source : 'cached');
+                scrapeVisibleIfMissing(notes);
+              } else {
+                renderNoNotesFound();
               }
             });
+          }
 
-            allNoteBodies = updatedCacheBodies;
-
-            if (notes.length === 0 && Object.keys(cacheBodies).length > 0) {
-              debugLog('No notes found but cache has bodies. Using cache to construct notes.');
-              notes = Object.keys(cacheBodies).map(uuid => ({
-                uuid: uuid,
-                note_label: 'Note ' + uuid.substring(0, 8) + '...',
-                created_at: new Date().toISOString(),
-                body_from_cache: true
-              }));
-            }
-
-            window.lastNotes = notes;
-
-            hideLoading();
-
-            if (notes.length > 0) {
-              showInstructions(false);
-              debugLog('Calling showNotes immediately with cached bodies');
-              showNotes(notes, response.source);
-              // Only scrape bodies for the currently displayed notes
-              scrapeVisibleIfMissing(notes);
-            } else {
-              renderNoNotesFound();
-            }
-          });
+          if (freshNotes.length > 0) {
+            proceed(freshNotes);
+          } else {
+            // Page didn't return notes (tab may be on wrong page) — use cached list
+            chrome.storage.session.get('cachedNotesList', function(result) {
+              const cached = result.cachedNotesList || [];
+              debugLog('Using cached notes list, count:', cached.length);
+              if (cached.length > 0) {
+                proceed(cached);
+              } else {
+                hideLoading();
+                showInstructions(true, 'Please log in to Doximity and open Scribe.');
+                notesListDiv.innerHTML = '';
+              }
+            });
+          }
         });
       } else {
         hideLoading();

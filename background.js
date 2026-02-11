@@ -1,8 +1,118 @@
 importScripts('shared.js');
 
+// Allow content scripts and popup to access session storage (PHI stays in memory only)
+chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+
 let NOTES_URL = "https://www.doximity.com/scribe/visit_notes/";
 let lastNoteIds = [];
 let pollingInterval = 60000;
+
+// --- Offscreen clipboard helper ---
+let creatingOffscreenDocument;
+
+async function setupOffscreenDocument() {
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT']
+  });
+  if (existingContexts.length > 0) return;
+
+  if (creatingOffscreenDocument) {
+    await creatingOffscreenDocument;
+  } else {
+    creatingOffscreenDocument = chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: [chrome.offscreen.Reason.CLIPBOARD],
+      justification: 'Copy dictation text to clipboard from notification.'
+    });
+    await creatingOffscreenDocument;
+    creatingOffscreenDocument = null;
+  }
+}
+
+async function copyToClipboard(text) {
+  await setupOffscreenDocument();
+  chrome.runtime.sendMessage({
+    type: 'copy-to-clipboard',
+    target: 'offscreen-clipboard',
+    data: text
+  });
+}
+
+// --- Notification button handler ---
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+  debugLog("Notification button clicked:", notificationId, "buttonIndex:", buttonIndex);
+
+  if (buttonIndex === 0) {
+    // "Copy Content" — use the newest note ID to look up its body in cache
+    const newestNoteId = lastNoteIds.length > 0 ? lastNoteIds[0] : null;
+    chrome.storage.session.get('dox_note_bodies', (result) => {
+      const bodies = result.dox_note_bodies || {};
+      let bodyToCopy = null;
+
+      if (newestNoteId && bodies[newestNoteId]) {
+        bodyToCopy = bodies[newestNoteId];
+        debugLog("Copy Content: Found body for newest note:", newestNoteId);
+      } else {
+        // Fallback: try partial match on newest note ID
+        const matchKey = newestNoteId && Object.keys(bodies).find(key =>
+          key.includes(newestNoteId) || newestNoteId.includes(key)
+        );
+        if (matchKey) {
+          bodyToCopy = bodies[matchKey];
+          debugLog("Copy Content: Found body via partial match:", matchKey);
+        } else if (Object.keys(bodies).length > 0) {
+          // Last resort: try to get the body from the content script
+          debugLog("Copy Content: No match for newest note, fetching from content script");
+          findDoximityTab((tab) => {
+            if (tab) {
+              chrome.tabs.sendMessage(tab.id, { type: 'GET_CACHED_NOTE_BODIES' }, (resp) => {
+                if (resp && resp.success && resp.data) {
+                  const freshBodies = resp.data;
+                  const freshKey = newestNoteId && freshBodies[newestNoteId]
+                    ? newestNoteId
+                    : Object.keys(freshBodies)[0];
+                  if (freshKey && freshBodies[freshKey]) {
+                    copyToClipboard(freshBodies[freshKey]).then(() => {
+                      debugLog("Copied note body from content script");
+                      chrome.action.setBadgeText({ text: '\u2713' });
+                      chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
+                      setTimeout(() => chrome.action.setBadgeText({ text: '' }), 2000);
+                    });
+                  }
+                }
+              });
+            }
+          });
+          chrome.notifications.clear(notificationId);
+          return;
+        }
+      }
+
+      if (bodyToCopy) {
+        copyToClipboard(bodyToCopy).then(() => {
+          debugLog("Copied newest note body to clipboard");
+          chrome.action.setBadgeText({ text: '\u2713' });
+          chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
+          setTimeout(() => chrome.action.setBadgeText({ text: '' }), 2000);
+        });
+      }
+    });
+  }
+
+  if (buttonIndex === 1) {
+    // "Open Scribed Note" — focus the pinned Doximity Scribe tab
+    findDoximityTab((tab) => {
+      if (tab) {
+        chrome.tabs.update(tab.id, { active: true });
+        chrome.windows.get(tab.windowId, (win) => {
+          if (win) chrome.windows.update(tab.windowId, { focused: true });
+        });
+      }
+    });
+  }
+
+  chrome.notifications.clear(notificationId);
+});
 
 // Listen for a message from the popup/options page to set the URL
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -44,7 +154,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               type: "basic",
               iconUrl: "icon-48.png",
               title: "New Dictation Detected",
-              message: "A new dictation was detected in Doximity Scribe"
+              message: "A new dictation was detected in Doximity Scribe",
+              buttons: [{ title: "Copy Content" }, { title: "Open Scribed Note" }]
             }, (notificationId) => {
               debugLog("Notification created with ID:", notificationId);
               if (chrome.runtime.lastError) {
@@ -68,7 +179,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         type: "basic",
         iconUrl: "icon-48.png",
         title: "New Dictation Detected",
-        message: "A new dictation was detected in Doximity Scribe"
+        message: "A new dictation was detected in Doximity Scribe",
+        buttons: [{ title: "Copy Content" }, { title: "Open Scribed Note" }]
       });
       setTimeout(() => syncNoteIds(), 1500);
     }
@@ -102,6 +214,20 @@ function syncNoteIds() {
         const noteIds = notes.map(n => n.uuid);
         debugLog("syncNoteIds - Updated lastNoteIds, count:", noteIds.length);
         lastNoteIds = noteIds;
+
+        // If the newest note has a body in the API response, cache it
+        const newestNote = notes[0];
+        const newestBody = newestNote?.body || newestNote?.content;
+        if (newestNote?.uuid && newestBody && newestBody.length > 10) {
+          chrome.storage.session.get('dox_note_bodies', (result) => {
+            const bodies = result.dox_note_bodies || {};
+            if (!bodies[newestNote.uuid]) {
+              bodies[newestNote.uuid] = newestBody;
+              chrome.storage.session.set({ dox_note_bodies: bodies });
+              debugLog("syncNoteIds - Cached newest note body:", newestNote.uuid);
+            }
+          });
+        }
 
         // Send to DotExpander if a new note appeared and integration is enabled
         if (lastNoteIds.length > 0) {
@@ -343,4 +469,10 @@ chrome.commands.onCommand.addListener(function(command) {
       }
     });
   }
+  // Chrome limits commands to 4 max — open-take-notes commented out for now
+  // else if (command === 'open-take-notes') {
+  //   chrome.storage.local.set({ openInTakeNotesMode: true }, () => {
+  //     chrome.action.openPopup();
+  //   });
+  // }
 });

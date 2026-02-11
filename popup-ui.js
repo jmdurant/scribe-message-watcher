@@ -99,12 +99,18 @@ function showNotes(notes, source) {
   hideLoading();
   notesListDiv.style.display = 'block';
 
+  // Tag each note with its original page position before sorting,
+  // so we can use it as a tiebreaker (Doximity returns newest first)
+  notes.forEach((n, i) => { n._pageIndex = i; });
   notes.sort((a, b) => {
-    let dateA = a.created_at ? new Date(a.created_at) : new Date(0);
-    let dateB = b.created_at ? new Date(b.created_at) : new Date(0);
-    if (isNaN(dateA.getTime())) dateA = new Date(0);
-    if (isNaN(dateB.getTime())) dateB = new Date(0);
-    return dateB - dateA;
+    // Missing/unparseable created_at → treat as "now" (newest notes may not have it yet)
+    let dateA = a.created_at ? new Date(a.created_at) : new Date();
+    let dateB = b.created_at ? new Date(b.created_at) : new Date();
+    if (isNaN(dateA.getTime())) dateA = new Date();
+    if (isNaN(dateB.getTime())) dateB = new Date();
+    const diff = dateB - dateA;
+    // If dates are equal or both missing, preserve Doximity's original order
+    return diff !== 0 ? diff : a._pageIndex - b._pageIndex;
   });
 
   notesListDiv.innerHTML = '';
@@ -504,10 +510,10 @@ function renderNoteDivElement(idx, body, note, hasBody, title) {
                   const bodyText = response.body;
                   div.innerHTML += '<br><pre style="white-space:pre-wrap;font-size:0.95em;margin:4px 0 0 0;">' + bodyText.substring(0, 200) + (bodyText.length > 200 ? '...' : '') + '</pre>';
                   allNoteBodies[note.uuid] = bodyText;
-                  chrome.storage.local.get('dox_note_bodies', function(result) {
+                  chrome.storage.session.get('dox_note_bodies', function(result) {
                     const bodies = result.dox_note_bodies || {};
                     bodies[note.uuid] = bodyText;
-                    chrome.storage.local.set({ dox_note_bodies: bodies });
+                    chrome.storage.session.set({ dox_note_bodies: bodies });
                   });
                 }
                 extractBtn.textContent = 'View Note';

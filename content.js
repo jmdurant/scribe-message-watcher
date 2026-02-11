@@ -15,7 +15,7 @@ function navigateWithinSPA(url) {
 const notesUuidMatch = window.location.href.match(/\/scribe\/visit_notes\/([\w-]+)/);
 if (notesUuidMatch) {
   const visitUuid = notesUuidMatch[1];
-  chrome.storage.local.set({ lastVisitUuid: visitUuid }, () => {
+  chrome.storage.session.set({ lastVisitUuid: visitUuid }, () => {
     debugLog('Cached visitUuid on load:', visitUuid);
   });
 }
@@ -540,7 +540,7 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
   if (msg.type === 'GET_CACHED_NOTE_BODIES') {
     debugLog('GET_CACHED_NOTE_BODIES received');
 
-    chrome.storage.local.get('dox_note_bodies', (result) => {
+    chrome.storage.session.get('dox_note_bodies', (result) => {
       const cachedBodies = result.dox_note_bodies || {};
       debugLog('Loaded cached bodies from storage:', Object.keys(cachedBodies));
 
@@ -549,7 +549,7 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
       if (visibleNoteBody.uuid && visibleNoteBody.body) {
         debugLog('Found visible note body for UUID:', visibleNoteBody.uuid);
         cachedBodies[visibleNoteBody.uuid] = visibleNoteBody.body;
-        chrome.storage.local.set({ dox_note_bodies: cachedBodies });
+        chrome.storage.session.set({ dox_note_bodies: cachedBodies });
       }
 
       sendResponse && sendResponse({ success: true, data: cachedBodies });
@@ -598,7 +598,7 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
         }
       }
     } else {
-      chrome.storage.local.get('lastVisitUuid', ({ lastVisitUuid }) => {
+      chrome.storage.session.get('lastVisitUuid', ({ lastVisitUuid }) => {
         debugLog('Cache lookup result:', lastVisitUuid);
         if (lastVisitUuid) {
           const targetUrl = '/scribe/visit_notes/' + lastVisitUuid;
@@ -712,10 +712,10 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
       const noteData = extractVisibleNoteBody();
       if (noteData.body) {
         debugLog('Extracted note body immediately, length:', noteData.body.length);
-        chrome.storage.local.get('dox_note_bodies', (result) => {
+        chrome.storage.session.get('dox_note_bodies', (result) => {
           const bodies = result.dox_note_bodies || {};
           bodies[msg.uuid] = noteData.body;
-          chrome.storage.local.set({ dox_note_bodies: bodies });
+          chrome.storage.session.set({ dox_note_bodies: bodies });
         });
         sendResponse({ success: true, body: noteData.body });
       } else {
@@ -730,10 +730,10 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
         const noteData = extractVisibleNoteBody();
         if (noteData.body) {
           debugLog('Extracted note body after navigation, length:', noteData.body.length);
-          chrome.storage.local.get('dox_note_bodies', (result) => {
+          chrome.storage.session.get('dox_note_bodies', (result) => {
             const bodies = result.dox_note_bodies || {};
             bodies[msg.uuid] = noteData.body;
-            chrome.storage.local.set({ dox_note_bodies: bodies });
+            chrome.storage.session.set({ dox_note_bodies: bodies });
           });
           sendResponse({ success: true, body: noteData.body });
         } else {
@@ -748,20 +748,20 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
 
 function cacheVisitUuid(visitUuid) {
   if (visitUuid) {
-    chrome.storage.local.set({ lastVisitUuid: visitUuid }, () => {
+    chrome.storage.session.set({ lastVisitUuid: visitUuid }, () => {
       debugLog('Cached visitUuid:', visitUuid);
     });
   }
 }
 
-// Scrape all note bodies via DOM, store in chrome.storage.local, and send to popup
+// Scrape all note bodies via DOM, store in chrome.storage.session, and send to popup
 async function scrapeAllNoteBodiesAndSend(notes) {
   debugLog("scrapeAllNoteBodiesAndSend - Starting with notes:", notes.length);
 
   let existingBodies = {};
   try {
     const result = await new Promise(resolve => {
-      chrome.storage.local.get('dox_note_bodies', (data) => resolve(data || {}));
+      chrome.storage.session.get('dox_note_bodies', (data) => resolve(data || {}));
     });
     existingBodies = result.dox_note_bodies || {};
     debugLog("scrapeAllNoteBodiesAndSend - Loaded existing cached bodies:", Object.keys(existingBodies).length);
@@ -877,8 +877,8 @@ async function scrapeAllNoteBodiesAndSend(notes) {
 
   debugLog("scrapeAllNoteBodiesAndSend - Final results object keys:", Object.keys(results).length);
 
-  chrome.storage.local.set({ dox_note_bodies: results }, () => {
-    debugLog("scrapeAllNoteBodiesAndSend - Stored bodies in chrome.storage.local");
+  chrome.storage.session.set({ dox_note_bodies: results }, () => {
+    debugLog("scrapeAllNoteBodiesAndSend - Stored bodies in chrome.storage.session");
     chrome.runtime.sendMessage({ type: 'ALL_NOTE_BODIES', data: results }, (response) => {
       debugLog("scrapeAllNoteBodiesAndSend - Sent ALL_NOTE_BODIES message");
     });
@@ -895,7 +895,7 @@ function handleConfirmDiscardNavigation() {
       setTimeout(() => {
         window.onbeforeunload = null;
         window.removeEventListener('beforeunload', function(){});
-        chrome.storage.local.get('lastVisitUuid', ({ lastVisitUuid }) => {
+        chrome.storage.session.get('lastVisitUuid', ({ lastVisitUuid }) => {
           if (lastVisitUuid) {
             const url = '/scribe/visit_notes/' + lastVisitUuid;
             debugLog('Navigating to cached notes page after discard confirm:', url);

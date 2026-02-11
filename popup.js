@@ -223,6 +223,7 @@ takeNotesBtn.onclick = () => {
   savePopupState();
   takeNotesBtn.style.display = 'none';
   stopNotesBtn.style.display = 'block';
+  showLoading();
 
   findDoximityTab(function(tab) {
     if (tab) {
@@ -287,7 +288,7 @@ stopNotesBtn.onclick = () => {
 };
 
 function forceNavigateToCachedVisitNotes(tab) {
-  chrome.storage.local.get('lastVisitUuid', ({ lastVisitUuid }) => {
+  chrome.storage.session.get('lastVisitUuid', ({ lastVisitUuid }) => {
     if (lastVisitUuid) {
       const url = 'https://www.doximity.com/scribe/visit_notes/' + lastVisitUuid;
       debugLog('Forcing navigation to:', url, 'in tab:', tab.id);
@@ -300,6 +301,15 @@ function forceNavigateToCachedVisitNotes(tab) {
 
 function popupInit() {
   debugLog("Popup initialized");
+  // Chrome limits commands to 4 max — open-take-notes (Alt+T) commented out for now
+  // chrome.storage.local.get('openInTakeNotesMode', function(result) {
+  //   if (result.openInTakeNotesMode) {
+  //     chrome.storage.local.remove('openInTakeNotesMode');
+  //     debugLog("Opened via Alt+T, triggering Take Notes");
+  //     takeNotesBtn.click();
+  //     return;
+  //   }
+  // });
   loadPopupState(function() {
     debugLog("Loaded popup state, mode:", popupMode);
     initPopupView();
