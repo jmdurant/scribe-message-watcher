@@ -458,7 +458,7 @@ function renderNoteDivElement(idx, body, note, hasBody, title) {
 
     const extractBtn = document.createElement('button');
     extractBtn.textContent = 'View Note';
-    extractBtn.style.background = '#4CAF50';
+    extractBtn.style.background = '#1976d2';
     extractBtn.style.color = 'white';
     extractBtn.style.border = 'none';
     extractBtn.style.borderRadius = '4px';
