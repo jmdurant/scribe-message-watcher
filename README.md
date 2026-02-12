@@ -85,6 +85,33 @@ When enabled in options, the extension reads the patient currently open in Pract
 
 - Click **Cancel Notes** in the popup, or press `Alt+C`
 
+## EHR Integration Details
+
+### How It Works
+
+The PracticeQ/IntakeQ integration uses a dedicated content script (`intakeq_content.js`) that runs on IntakeQ pages. The data flow is entirely client-side with no PHI persisted:
+
+1. **Content script scrapes the EHR page** — When you have a patient open in IntakeQ (`intakeq.com/#/client/*`), the content script extracts demographics from the DOM: patient name, DOB, MRN, visit date, start/end times, provider, and referring provider.
+2. **Popup requests data at render time** — When the extension popup renders your note list with PracticeQ integration enabled, it sends a `GET_CLIENT_DATA` message to the IntakeQ tab.
+3. **Visit matching** — The extension compares each note's timestamp against the current visit's start/end time window to identify which dictation belongs to the open appointment.
+4. **Template fill at display time** — Matching notes have placeholders replaced with patient data before rendering:
+   - `[Name]` — Patient name
+   - `[DOB]` — Date of birth
+   - `[MRN]` — Client ID / Medical Record Number
+   - `[Date]` — Visit date
+   - `[Referring Provider Name]` — Referring provider
+   - `[Consulting Provider Name]` — Treating provider
+5. **Copy includes filled data** — When you copy a note, the clipboard gets the template-filled version with patient demographics already inserted.
+
+The original note body in the cache is never modified — the merge happens in-memory at display/copy time only. No EHR data is stored by the extension.
+
+### Supported EHR Systems
+
+| System | Status | Content Script |
+|--------|--------|----------------|
+| PracticeQ / IntakeQ | Supported | `intakeq_content.js` |
+| OpenEMR | Planned | — |
+
 ## Extension Icon Badges
 
 The extension icon shows the current state at a glance via badge overlays:
