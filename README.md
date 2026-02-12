@@ -91,6 +91,8 @@ Shortcuts work globally — you don't need to be on the Doximity tab.
 
 To customize shortcuts, go to `chrome://extensions/shortcuts` in your browser.
 
+**Tip:** Map these shortcuts to programmable mouse buttons (e.g. Logitech, Razer, or any mouse with extra buttons) for one-click control during a visit. Assign `Alt+M` to a side button to start/pause recording without touching the keyboard.
+
 ## Usage
 
 ### Recording a Visit
