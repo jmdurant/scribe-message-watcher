@@ -25,7 +25,10 @@
     "https://intakeq.com/*",
     "https://*.intakeq.com/*",
     "https://practiceq.com/*",
-    "https://*.practiceq.com/*"
+    "https://*.practiceq.com/*",
+    "https://*.openemr.io/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -51,6 +54,13 @@
         "https://*.practiceq.com/*"
       ],
       "js": ["shared.js", "intakeq_content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.openemr.io/*"
+      ],
+      "js": ["shared.js", "openemr_content.js"],
       "run_at": "document_idle"
     }
   ],

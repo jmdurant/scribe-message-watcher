@@ -7,6 +7,24 @@ let NOTES_URL = "https://www.doximity.com/scribe/visit_notes/";
 let lastNoteIds = [];
 let pollingInterval = 60000;
 
+// Register OpenEMR content script for custom domain on startup
+chrome.storage.sync.get(['openEmrIntegrationEnabled', 'openEmrDomain'], function(result) {
+  if (result.openEmrIntegrationEnabled && result.openEmrDomain) {
+    const domain = result.openEmrDomain;
+    debugLog('Startup: registering OpenEMR content script for', domain);
+    chrome.scripting.unregisterContentScripts({ ids: ['openemr-custom'] }).catch(() => {}).then(() => {
+      chrome.scripting.registerContentScripts([{
+        id: 'openemr-custom',
+        matches: ['https://' + domain + '/*', 'http://' + domain + '/*'],
+        js: ['shared.js', 'openemr_content.js'],
+        runAt: 'document_idle'
+      }]).catch(err => {
+        console.warn('Startup: failed to register OpenEMR content script:', err);
+      });
+    });
+  }
+});
+
 // --- Offscreen clipboard helper ---
 let creatingOffscreenDocument;
 
@@ -117,6 +135,34 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 // Listen for a message from the popup/options page to set the URL
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   debugLog("Background onMessage - received message:", msg.type, "with data:", JSON.stringify(msg));
+
+  // Dynamic OpenEMR content script registration for custom domains
+  if (msg.type === 'REGISTER_OPENEMR_DOMAIN') {
+    const domain = msg.domain || 'demo.openemr.io';
+    debugLog('Registering OpenEMR content script for domain:', domain);
+    // Unregister first to avoid duplicates
+    chrome.scripting.unregisterContentScripts({ ids: ['openemr-custom'] }).catch(() => {}).then(() => {
+      chrome.scripting.registerContentScripts([{
+        id: 'openemr-custom',
+        matches: ['https://' + domain + '/*', 'http://' + domain + '/*'],
+        js: ['shared.js', 'openemr_content.js'],
+        runAt: 'document_idle'
+      }]).then(() => {
+        debugLog('OpenEMR content script registered for', domain);
+      }).catch(err => {
+        console.warn('Failed to register OpenEMR content script:', err);
+      });
+    });
+    sendResponse({ success: true });
+    return;
+  }
+
+  if (msg.type === 'UNREGISTER_OPENEMR_DOMAIN') {
+    debugLog('Unregistering OpenEMR content script');
+    chrome.scripting.unregisterContentScripts({ ids: ['openemr-custom'] }).catch(() => {});
+    sendResponse({ success: true });
+    return;
+  }
 
   if (msg.type === "SET_NOTES_URL" && msg.url) {
     NOTES_URL = msg.url;

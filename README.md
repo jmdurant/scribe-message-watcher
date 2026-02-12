@@ -159,11 +159,11 @@ The original note body in the cache is never modified — the merge happens in-m
 | System | Status | Content Script |
 |--------|--------|----------------|
 | PracticeQ / IntakeQ | Supported | `intakeq_content.js` |
-| OpenEMR | Planned | — |
+| OpenEMR | Supported | `openemr_content.js` |
 
 ### DotExpander Integration
 
-The [DotExpander](https://dotexpander.com) integration provides two ways to get dictation text into your text expansion workflow. Both use Chrome's cross-extension messaging API — no server involved.
+The DotExpander (Dr. DuRant's private text expander Chrome extension) integration provides two ways to get dictation text into your text expansion workflow. Both use Chrome's cross-extension messaging API — no server involved.
 
 **Automatic variable push** — When a new dictation is detected, the background service worker automatically sends the note content to DotExpander as a snippet variable. This makes `@scribe@` immediately available for use in any DotExpander snippet or template. The variable includes both the dictation text and a timestamp.
 
@@ -194,6 +194,7 @@ No PHI is transmitted to any server other than Doximity. The extension communica
 Right-click the extension icon and select **Options** to configure:
 
 - **PracticeQ Integration** — Enable/disable EHR patient data auto-fill
+- **OpenEMR Integration** — Enable/disable OpenEMR patient data auto-fill with configurable instance domain (default: `demo.openemr.io`)
 - **DotExpander Integration** — Enable/disable sending dictations to DotExpander (auto-detects the extension)
 - **Debug Mode** — Enable detailed console logging for troubleshooting
 
@@ -221,6 +222,7 @@ These sit on the desk, pick up both provider and patient clearly, and don't requ
 | `background.js` | Service worker for notifications, polling, and keyboard shortcuts |
 | `content.js` | Content script for Doximity Scribe page interaction |
 | `intakeq_content.js` | Content script for PracticeQ/IntakeQ patient data extraction |
+| `openemr_content.js` | Content script for OpenEMR patient data extraction |
 | `popup.html` | Extension popup markup |
 | `popup.js` | Popup initialization, state management, and event listeners |
 | `popup-ui.js` | Popup rendering functions (notes list, mic controls, dialogs) |
@@ -233,8 +235,10 @@ These sit on the desk, pick up both provider and patient clearly, and don't requ
 
 James M DuRant III MD MBA
 Developmental-Behavioral Pediatrician
-[Doximity Profile](https://www.doximity.com/pub/james-durant-md-06d4dc27) | [james@doctordurant.com](mailto:james@doctordurant.com) | [developmentalondemand.com](https://developmentalondemand.com)
+[Doximity Profile](https://www.doximity.com/pub/james-durant-md-06d4dc27) | [LinkedIn](https://www.linkedin.com/in/jamesdurant) | [james@doctordurant.com](mailto:james@doctordurant.com) | [developmentalondemand.com](https://developmentalondemand.com)
 
 ## License
 
-Integrates with Doximity Scribe.
+Copyright (c) 2025-2026 James M DuRant III MD MBA. All rights reserved. See [LICENSE](LICENSE) for details.
+
+This extension integrates with Doximity Scribe.

@@ -28,6 +28,16 @@
     <div id="dotexpander-detect-status" style="margin-top: 10px; font-size: 0.95em;"></div>
     <div id="dotexpander-save-status" class="save-status">Saved!</div>
   </div>
+  <div class="option-section">
+    <label><input type="checkbox" id="openemr-integration-checkbox">Enable OpenEMR Integration</label>
+    <div class="desc">When enabled, the extension will integrate with OpenEMR for patient data auto-fill. Enter your OpenEMR instance domain below.</div>
+    <div id="openemr-domain-container" style="margin-top: 10px; display: none;">
+      <label style="font-weight: normal; font-size: 0.95em;">OpenEMR Domain:</label>
+      <input type="text" id="openemr-domain-input" placeholder="demo.openemr.io">
+      <div style="color: #888; font-size: 0.85em; margin-top: 4px;">Enter just the domain (e.g. <code>demo.openemr.io</code> or <code>emr.yourpractice.com</code>). Default: <code>demo.openemr.io</code></div>
+    </div>
+    <div id="openemr-save-status" class="save-status">Saved!</div>
+  </div>
   <!-- Debug Mode Section -->
   <div class="option-section">
     <label><input type="checkbox" id="debug-mode-checkbox">Enable Debug Logging</label>
@@ -50,7 +60,7 @@
       Integrates with Doximity Scribe.<br>
       Extension created by James M DuRant III MD MBA (<a href="mailto:james@doctordurant.com">james@doctordurant.com</a>)<br>
       Developmental-Behavioral Pediatrician<br>
-      <a href="https://www.doximity.com/pub/james-durant-md-06d4dc27" target="_blank">Doximity Profile</a> | <a href="https://developmentalondemand.com" target="_blank">developmentalondemand.com</a>
+      <a href="https://www.doximity.com/pub/james-durant-md-06d4dc27" target="_blank">Doximity Profile</a> | <a href="https://www.linkedin.com/in/jamesdurant" target="_blank">LinkedIn</a> | <a href="https://developmentalondemand.com" target="_blank">developmentalondemand.com</a>
     </div>
   </div>
   <!-- Add more option sections here as needed -->

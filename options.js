@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const dotExpanderCheckbox = document.getElementById('dotexpander-integration-checkbox');
   const dotExpanderSaveStatus = document.getElementById('dotexpander-save-status');
   const dotExpanderDetectStatus = document.getElementById('dotexpander-detect-status');
+  const openEmrCheckbox = document.getElementById('openemr-integration-checkbox');
+  const openEmrSaveStatus = document.getElementById('openemr-save-status');
+  const openEmrDomainContainer = document.getElementById('openemr-domain-container');
+  const openEmrDomainInput = document.getElementById('openemr-domain-input');
   const debugCheckbox = document.getElementById('debug-mode-checkbox');
   const debugSaveStatus = document.getElementById('debug-save-status');
 
@@ -15,10 +19,17 @@ document.addEventListener('DOMContentLoaded', function() {
     'practiceQIntegrationEnabled',
     'dotExpanderIntegrationEnabled',
     'dotExpanderExtensionId',
+    'openEmrIntegrationEnabled',
+    'openEmrDomain',
     'debugModeEnabled'
   ], function(result) {
     practiceQCheckbox.checked = !!result.practiceQIntegrationEnabled;
     dotExpanderCheckbox.checked = !!result.dotExpanderIntegrationEnabled;
+    openEmrCheckbox.checked = !!result.openEmrIntegrationEnabled;
+    openEmrDomainInput.value = result.openEmrDomain || 'demo.openemr.io';
+    if (openEmrCheckbox.checked) {
+      openEmrDomainContainer.style.display = 'block';
+    }
     debugCheckbox.checked = !!result.debugModeEnabled;
     if (dotExpanderCheckbox.checked) {
       detectDotExpander();
@@ -80,6 +91,36 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // OpenEMR
+  openEmrCheckbox.addEventListener('change', function() {
+    if (openEmrCheckbox.checked) {
+      openEmrDomainContainer.style.display = 'block';
+      var domain = openEmrDomainInput.value.trim() || 'demo.openemr.io';
+      chrome.storage.sync.set({ openEmrIntegrationEnabled: true, openEmrDomain: domain }, function() {
+        flashSaved(openEmrSaveStatus);
+        // Notify background to register content script for custom domain
+        chrome.runtime.sendMessage({ type: 'REGISTER_OPENEMR_DOMAIN', domain: domain });
+      });
+    } else {
+      openEmrDomainContainer.style.display = 'none';
+      chrome.storage.sync.set({ openEmrIntegrationEnabled: false }, function() {
+        flashSaved(openEmrSaveStatus);
+        chrome.runtime.sendMessage({ type: 'UNREGISTER_OPENEMR_DOMAIN' });
+      });
+    }
+  });
+
+  // Save domain when changed
+  openEmrDomainInput.addEventListener('change', function() {
+    var domain = openEmrDomainInput.value.trim() || 'demo.openemr.io';
+    chrome.storage.sync.set({ openEmrDomain: domain }, function() {
+      flashSaved(openEmrSaveStatus);
+      if (openEmrCheckbox.checked) {
+        chrome.runtime.sendMessage({ type: 'REGISTER_OPENEMR_DOMAIN', domain: domain });
+      }
+    });
+  });
 
   // Debug mode
   debugCheckbox.addEventListener('change', function() {
