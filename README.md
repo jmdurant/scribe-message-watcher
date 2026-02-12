@@ -20,8 +20,8 @@ These interruptions break the flow of the encounter. The provider ends up juggli
 
 Scribe Message Watcher moves the entire Doximity Scribe workflow into the Chrome browser, where you're already working. A desktop or external USB/Bluetooth microphone (such as the [Anker PowerConf](https://www.anker.com/products/a3301-anker-powerconf-bluetooth-speakerphone) or [AnkerWork S600](https://www.ankerwork.com/products/a3307-ankerwork-s600-speakerphone)) replaces the mobile device, and the extension handles the rest:
 
-1. **Start recording from the browser** — Click the extension icon or press `Alt+M`. No phone needed. The desktop mic picks up the conversation with better audio quality than a phone across the room.
-2. **Control recording without switching tabs** — Keyboard shortcuts (`Alt+M` to pause/resume, `Alt+G` to generate, `Alt+C` to cancel) work globally, so you stay in your EHR while Scribe records in the background.
+1. **Start recording from the browser** — Click the extension icon or press `Alt+S`. No phone needed. The desktop mic picks up the conversation with better audio quality than a phone across the room.
+2. **Control recording without switching tabs** — Keyboard shortcuts (`Alt+S` to pause/resume, `Alt+G` to generate, `Alt+C` to cancel) work globally, so you stay in your EHR while Scribe records in the background.
 3. **Get notified when the note is ready** — Chrome sends a desktop notification the moment Scribe finishes generating. No more checking back.
 4. **One-click copy** — Open the extension popup, see your recent notes, and click copy. The scribe result is on your clipboard, ready to paste into the EHR.
 5. **Optional EHR auto-fill** — With PracticeQ/IntakeQ integration enabled, the extension reads the currently-open patient's name, DOB, MRN, and visit date, then fills those fields into the copied note automatically. No retyping demographics.
@@ -82,7 +82,7 @@ The extension will automatically detect the Doximity tab and pin it.
 
 | Shortcut | Action |
 |----------|--------|
-| `Alt+M` | Toggle microphone (Start / Pause / Resume) |
+| `Alt+S` | Toggle microphone (Start / Pause / Resume) |
 | `Alt+G` | Generate note |
 | `Alt+C` | Cancel / discard recording |
 | `Alt+,` | Open extension popup |
@@ -91,7 +91,7 @@ Shortcuts work globally — you don't need to be on the Doximity tab.
 
 To customize shortcuts, go to `chrome://extensions/shortcuts` in your browser.
 
-**Tip:** Map these shortcuts to programmable mouse buttons (e.g. Logitech, Razer, or any mouse with extra buttons) for one-click control during a visit. Assign `Alt+M` to a side button to start/pause recording without touching the keyboard.
+**Tip:** Map these shortcuts to programmable mouse buttons (e.g. Logitech, Razer, or any mouse with extra buttons) for one-click control during a visit. Assign `Alt+S` to a side button to start/pause recording without touching the keyboard.
 
 ## Usage
 
@@ -100,9 +100,9 @@ To customize shortcuts, go to `chrome://extensions/shortcuts` in your browser.
 1. Open the extension popup (`Alt+,` or click the icon)
 2. Click **Take Notes** — the extension navigates to Doximity Scribe's recording page
 3. Select your microphone and note type from the dropdowns
-4. Press `Alt+M` or click the mic button to start recording
+4. Press `Alt+S` or click the mic button to start recording
 5. Conduct the visit normally — the desktop mic captures the conversation
-6. Press `Alt+M` to pause if needed, then `Alt+M` again to resume
+6. Press `Alt+S` to pause if needed, then `Alt+S` again to resume
 7. Press `Alt+G` to generate the note when the visit is complete
 
 ### Getting the Result

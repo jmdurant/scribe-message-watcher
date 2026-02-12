@@ -73,7 +73,7 @@
     },
     "toggle-microphone": {
       "suggested_key": {
-        "default": "Alt+M"
+        "default": "Alt+S"
       },
       "description": "Toggle microphone record/pause/resume in Doximity Scribe tab"
     },
