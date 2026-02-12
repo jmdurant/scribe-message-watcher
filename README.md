@@ -18,7 +18,7 @@ These interruptions break the flow of the encounter. The provider ends up juggli
 
 ## The Solution
 
-Scribe Message Watcher moves the entire Doximity Scribe workflow into the Chrome browser, where you're already working. A desktop or external USB/Bluetooth microphone (such as the [Anker PowerConf](https://www.anker.com/products/a3301-anker-powerconf-bluetooth-speakerphone) or [AnkerWork S400](https://www.ankerwork.com/products/a3307-ankerwork-s400-speakerphone)) replaces the mobile device, and the extension handles the rest:
+Scribe Message Watcher moves the entire Doximity Scribe workflow into the Chrome browser, where you're already working. A desktop or external USB/Bluetooth microphone (such as the [Anker PowerConf](https://www.anker.com/products/a3301-anker-powerconf-bluetooth-speakerphone) or [AnkerWork S600](https://www.ankerwork.com/products/a3307-ankerwork-s600-speakerphone)) replaces the mobile device, and the extension handles the rest:
 
 1. **Start recording from the browser** — Click the extension icon or press `Alt+M`. No phone needed. The desktop mic picks up the conversation with better audio quality than a phone across the room.
 2. **Control recording without switching tabs** — Keyboard shortcuts (`Alt+M` to pause/resume, `Alt+G` to generate, `Alt+C` to cancel) work globally, so you stay in your EHR while Scribe records in the background.
@@ -202,7 +202,13 @@ Right-click the extension icon and select **Options** to configure:
 Any desktop or USB microphone works, but conference speakerphones designed for room pickup work especially well in an exam room:
 
 - **Anker PowerConf** — Bluetooth/USB speakerphone with 360-degree pickup
-- **AnkerWork S400** — USB-C speakerphone with enhanced voice clarity
+- **AnkerWork S600** — USB-C speakerphone with enhanced voice clarity and wireless charging pad
+
+<p align="center">
+  <img src="powerconf.png" alt="Anker PowerConf" width="200">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="s600.png" alt="AnkerWork S600" width="140">
+</p>
 
 These sit on the desk, pick up both provider and patient clearly, and don't require a phone in the room.
 
