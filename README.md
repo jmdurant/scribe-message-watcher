@@ -112,6 +112,19 @@ The original note body in the cache is never modified — the merge happens in-m
 | PracticeQ / IntakeQ | Supported | `intakeq_content.js` |
 | OpenEMR | Planned | — |
 
+### DotExpander Integration
+
+The [DotExpander](https://dotexpander.com) integration provides two ways to get dictation text into your text expansion workflow. Both use Chrome's cross-extension messaging API — no server involved.
+
+**Automatic variable push** — When a new dictation is detected, the background service worker automatically sends the note content to DotExpander as a snippet variable. This makes `@dictation@` immediately available for use in any DotExpander snippet or template. The variable includes both the dictation text and a timestamp.
+
+**Manual snippet saving** — Each note in the popup has a "Save Snippet" button. Clicking it opens a dialog where you can:
+1. Name the snippet (defaults to a timestamped name like `Dictation_2026-02-10_3-45PM`)
+2. Select an existing DotExpander folder or create a new one
+3. Save the full note body as a reusable text expansion snippet
+
+Both features communicate directly with the DotExpander extension via its extension ID, which is configurable in the options page (defaults to `ljlmfclhdpcppglkaiieomhmpnfilagd`).
+
 ## Extension Icon Badges
 
 The extension icon shows the current state at a glance via badge overlays:
