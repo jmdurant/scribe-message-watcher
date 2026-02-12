@@ -70,7 +70,13 @@ Click the puzzle piece icon in the Chrome toolbar, then click the pin icon next 
 
 ### 4. Log in to Doximity
 
-Open [Doximity Scribe](https://www.doximity.com/scribe/home) and log in. The extension will automatically detect the tab and pin it.
+Click the extension icon. If you're not logged in, you'll see the screen below — click **Open Doximity Scribe** to open the login page, then log in.
+
+<p align="center">
+  <img src="notloggedin.png" alt="Not logged in" width="280">
+</p>
+
+The extension will automatically detect the Doximity tab and pin it.
 
 ## Keyboard Shortcuts
 
