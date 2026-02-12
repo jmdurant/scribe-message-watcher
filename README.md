@@ -28,6 +28,12 @@ Scribe Message Watcher moves the entire Doximity Scribe workflow into the Chrome
 
 The result: **the entire dictation-to-note workflow happens in the browser, in front of the patient, without breaking the flow of the visit.**
 
+<p align="center">
+  <img src="messagelist.png" alt="Message List" width="280">
+  &nbsp;&nbsp;&nbsp;
+  <img src="takenotes.png" alt="Take Notes / Recording" width="280">
+</p>
+
 ## Features
 
 - **Browser-based recording** — Use any desktop, USB, or Bluetooth microphone instead of a mobile device
@@ -38,6 +44,33 @@ The result: **the entire dictation-to-note workflow happens in the browser, in f
 - **PracticeQ/IntakeQ integration** — Optionally pull patient demographics into the copied note
 - **DotExpander integration** — Optionally send dictations to DotExpander as the `@scribe@` snippet variable
 - **Debug mode** — Toggle detailed logging from the options page for troubleshooting
+
+## Installation
+
+### 1. Download the extension
+
+- Go to the [GitHub repository](https://github.com/jmdurant/scribe-message-watcher)
+- Click the green **Code** button, then **Download ZIP**
+- Extract the ZIP file to a folder on your computer (e.g. `C:\Extensions\scribe-message-watcher`)
+
+### 2. Load in Chrome
+
+- Open Chrome and navigate to `chrome://extensions/`
+- Enable **Developer mode** using the toggle in the top right corner
+- Click **Load unpacked**
+- Select the extracted extension folder
+
+### 3. Pin the extension
+
+Click the puzzle piece icon in the Chrome toolbar, then click the pin icon next to **Scribe Message Watcher** so it's always visible.
+
+<p align="center">
+  <img src="pin.png" alt="Pin the extension" width="300">
+</p>
+
+### 4. Log in to Doximity
+
+Open [Doximity Scribe](https://www.doximity.com/scribe/home) and log in. The extension will automatically detect the tab and pin it.
 
 ## Keyboard Shortcuts
 
@@ -50,13 +83,7 @@ The result: **the entire dictation-to-note workflow happens in the browser, in f
 
 Shortcuts work globally — you don't need to be on the Doximity tab.
 
-## Installation
-
-1. Clone or download this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode" (toggle in top right)
-4. Click "Load unpacked" and select the extension folder
-5. Pin the extension to your toolbar for easy access
+To customize shortcuts, go to `chrome://extensions/shortcuts` in your browser.
 
 ## Usage
 
@@ -84,6 +111,16 @@ When enabled in options, the extension reads the patient currently open in Pract
 ### Canceling a Recording
 
 - Click **Cancel Notes** in the popup, or press `Alt+C`
+
+## Extension Icon Status
+
+The extension icon shows the current state at a glance:
+
+| Icon | Status |
+|------|--------|
+| <img src="recording.png" alt="Recording" height="28"> | Recording in progress |
+| <img src="paused.png" alt="Paused" height="28"> | Recording paused |
+| <img src="completed.png" alt="Completed" height="28"> | Note generated |
 
 ## EHR Integration Details
 
@@ -124,18 +161,6 @@ The [DotExpander](https://dotexpander.com) integration provides two ways to get 
 3. Save the full note body as a reusable text expansion snippet
 
 Both features communicate directly with the DotExpander extension via Chrome's cross-extension messaging API. The extension automatically detects DotExpander when you enable the integration in options — no manual configuration needed.
-
-## Extension Icon Badges
-
-The extension icon shows the current state at a glance via badge overlays:
-
-| Badge | Meaning |
-|-------|---------|
-| :red_circle: `●` | Recording in progress |
-| :orange_circle: `❚❚` | Recording paused |
-| :green_circle: `✓` | Note generated (clears after 3s) |
-| :red_circle: `✕` | Recording cancelled (clears after 3s) |
-| :large_blue_circle: `NEW` | New dictation available |
 
 ## Privacy & Data Handling
 
@@ -190,8 +215,7 @@ These sit on the desk, pick up both provider and patient clearly, and don't requ
 
 James M DuRant III MD MBA
 Developmental-Behavioral Pediatrician
-[james@doctordurant.com](mailto:james@doctordurant.com)
-[https://developmentalondemand.com](https://developmentalondemand.com)
+[Doximity Profile](https://www.doximity.com/pub/james-durant-md-06d4dc27) | [james@doctordurant.com](mailto:james@doctordurant.com) | [developmentalondemand.com](https://developmentalondemand.com)
 
 ## License
 
