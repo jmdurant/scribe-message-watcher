@@ -269,16 +269,54 @@ function syncNoteIds() {
   });
 }
 
-// On startup, close any existing Doximity tabs and reopen Scribe as a pinned background tab.
-// This ensures a clean pinned state every time Chrome or the extension starts.
-function openScribeHomeAsPinnedTab() {
+// On startup, ensure a pinned Doximity Scribe tab exists.
+// Reuses an existing tab if found — never closes user tabs.
+function ensurePinnedScribeTab() {
   chrome.tabs.query({}, (tabs) => {
-    const scribeHomeUrl = 'https://www.doximity.com/scribe/home';
-    const doximityTabs = tabs.filter(tab => tab.url && tab.url.includes('doximity.com'));
-    doximityTabs.forEach(tab => chrome.tabs.remove(tab.id));
+    const scribeTabs = tabs.filter(tab => tab.url && tab.url.includes('doximity.com/scribe'));
 
-    chrome.tabs.create({ url: scribeHomeUrl, pinned: true, active: false }, function(tab) {
-      chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, updatedTab) {
+    if (scribeTabs.length > 0) {
+      // Already have a Scribe tab — pin it if not already pinned
+      const existing = scribeTabs[0];
+      if (!existing.pinned) {
+        chrome.tabs.update(existing.id, { pinned: true });
+        debugLog('Pinned existing Scribe tab:', existing.id);
+      } else {
+        debugLog('Scribe tab already pinned:', existing.id);
+      }
+      // Sync notes once the tab is ready
+      if (existing.status === 'complete') {
+        syncNoteIds();
+      } else {
+        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+          if (tabId === existing.id && changeInfo.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(listener);
+            syncNoteIds();
+          }
+        });
+      }
+      return;
+    }
+
+    // Check for any doximity.com tab (e.g. login page, home) — reuse and navigate
+    const doximityTab = tabs.find(tab => tab.url && tab.url.includes('doximity.com'));
+    if (doximityTab) {
+      chrome.tabs.update(doximityTab.id, { url: 'https://www.doximity.com/scribe/home', pinned: true }, function() {
+        debugLog('Reused existing Doximity tab, navigated to scribe/home:', doximityTab.id);
+        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+          if (tabId === doximityTab.id && changeInfo.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(listener);
+            syncNoteIds();
+          }
+        });
+      });
+      return;
+    }
+
+    // No Doximity tab at all — create one
+    chrome.tabs.create({ url: 'https://www.doximity.com/scribe/home', pinned: true, active: false }, function(tab) {
+      debugLog('Created new pinned Scribe tab:', tab.id);
+      chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
         if (tabId === tab.id && changeInfo.status === 'complete') {
           chrome.tabs.onUpdated.removeListener(listener);
           syncNoteIds();
@@ -289,7 +327,7 @@ function openScribeHomeAsPinnedTab() {
 }
 
 // Run this on extension load
-openScribeHomeAsPinnedTab();
+ensurePinnedScribeTab();
 
 // Use chrome.alarms instead of setInterval (MV3 service workers can be suspended)
 debugLog("Setting up chrome.alarms for polling");
