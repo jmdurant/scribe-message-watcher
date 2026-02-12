@@ -199,7 +199,7 @@ Right-click the extension icon and select **Options** to configure:
 
 ## Recommended Microphones
 
-Any desktop or USB microphone works, but conference speakerphones designed for room pickup work especially well in an exam room:
+Your laptop's built-in microphone actually works remarkably well — Doximity Scribe's speech recognition handles typical exam room audio without issue. For better audio quality, an external USB or Bluetooth microphone will produce clearer results, especially in larger rooms or noisy environments. I have tested the following microphones with success:
 
 - **Anker PowerConf** — Bluetooth/USB speakerphone with 360-degree pickup
 - **AnkerWork S600** — USB-C speakerphone with enhanced voice clarity and wireless charging pad
