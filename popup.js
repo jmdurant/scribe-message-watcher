@@ -12,7 +12,7 @@ document.body.appendChild(notesListDiv);
 let allNoteBodies = {};
 let pendingScrapeNotes = null;
 let doximityTabId = null;
-let displayedCount = 2;
+let displayedCount = 1;
 let practiceQIntegrationEnabled = false;
 let dotExpanderIntegrationEnabled = false;
 let dotExpanderExtensionId = 'ljlmfclhdpcppglkaiieomhmpnfilagd';
