@@ -36,7 +36,7 @@ The result: **the entire dictation-to-note workflow happens in the browser, in f
 - **One-click copy** — View recent notes in the popup and copy results instantly
 - **Recording status badge** — Extension icon shows recording state at a glance
 - **PracticeQ/IntakeQ integration** — Optionally pull patient demographics into the copied note
-- **DotExpander integration** — Optionally send dictations to DotExpander as the `@dictation@` snippet variable
+- **DotExpander integration** — Optionally send dictations to DotExpander as the `@scribe@` snippet variable
 - **Debug mode** — Toggle detailed logging from the options page for troubleshooting
 
 ## Keyboard Shortcuts
@@ -116,7 +116,7 @@ The original note body in the cache is never modified — the merge happens in-m
 
 The [DotExpander](https://dotexpander.com) integration provides two ways to get dictation text into your text expansion workflow. Both use Chrome's cross-extension messaging API — no server involved.
 
-**Automatic variable push** — When a new dictation is detected, the background service worker automatically sends the note content to DotExpander as a snippet variable. This makes `@dictation@` immediately available for use in any DotExpander snippet or template. The variable includes both the dictation text and a timestamp.
+**Automatic variable push** — When a new dictation is detected, the background service worker automatically sends the note content to DotExpander as a snippet variable. This makes `@scribe@` immediately available for use in any DotExpander snippet or template. The variable includes both the dictation text and a timestamp.
 
 **Manual snippet saving** — Each note in the popup has a "Save Snippet" button. Clicking it opens a dialog where you can:
 1. Name the snippet (defaults to a timestamped name like `Dictation_2026-02-10_3-45PM`)

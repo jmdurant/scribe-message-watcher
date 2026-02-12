@@ -253,7 +253,7 @@ function syncNoteIds() {
             chrome.runtime.sendMessage(targetExtensionId, {
               type: 'SEND_VARIABLES',
               variables: {
-                dictation: { value: dictationContent, timestamp: noteTimestamp }
+                scribe: { value: dictationContent, timestamp: noteTimestamp }
               }
             }, (response) => {
               if (chrome.runtime.lastError) {
