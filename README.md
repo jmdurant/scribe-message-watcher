@@ -123,7 +123,7 @@ The [DotExpander](https://dotexpander.com) integration provides two ways to get 
 2. Select an existing DotExpander folder or create a new one
 3. Save the full note body as a reusable text expansion snippet
 
-Both features communicate directly with the DotExpander extension via its extension ID, which is configurable in the options page (defaults to `ljlmfclhdpcppglkaiieomhmpnfilagd`).
+Both features communicate directly with the DotExpander extension via Chrome's cross-extension messaging API. The extension automatically detects DotExpander when you enable the integration in options — no manual configuration needed.
 
 ## Extension Icon Badges
 
@@ -157,8 +157,7 @@ No PHI is transmitted to any server other than Doximity. The extension communica
 Right-click the extension icon and select **Options** to configure:
 
 - **PracticeQ Integration** — Enable/disable EHR patient data auto-fill
-- **DotExpander Integration** — Enable/disable sending dictations to DotExpander
-- **DotExpander Extension ID** — Set the ID if using a custom DotExpander build
+- **DotExpander Integration** — Enable/disable sending dictations to DotExpander (auto-detects the extension)
 - **Debug Mode** — Enable detailed console logging for troubleshooting
 
 ## Recommended Microphones

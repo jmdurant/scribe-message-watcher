@@ -17,7 +17,8 @@
     "scripting",
     "alarms",
     "offscreen",
-    "clipboardWrite"
+    "clipboardWrite",
+    "management"
   ],
   "host_permissions": [
     "https://www.doximity.com/scribe/*",

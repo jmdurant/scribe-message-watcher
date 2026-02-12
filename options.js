@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const practiceQSaveStatus = document.getElementById('practiceq-save-status');
   const dotExpanderCheckbox = document.getElementById('dotexpander-integration-checkbox');
   const dotExpanderSaveStatus = document.getElementById('dotexpander-save-status');
-  const dotExpanderIdInput = document.getElementById('dotexpander-extension-id');
+  const dotExpanderDetectStatus = document.getElementById('dotexpander-detect-status');
   const debugCheckbox = document.getElementById('debug-mode-checkbox');
   const debugSaveStatus = document.getElementById('debug-save-status');
 
@@ -19,8 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
   ], function(result) {
     practiceQCheckbox.checked = !!result.practiceQIntegrationEnabled;
     dotExpanderCheckbox.checked = !!result.dotExpanderIntegrationEnabled;
-    dotExpanderIdInput.value = result.dotExpanderExtensionId || 'ljlmfclhdpcppglkaiieomhmpnfilagd';
     debugCheckbox.checked = !!result.debugModeEnabled;
+    if (dotExpanderCheckbox.checked) {
+      detectDotExpander();
+    }
   });
 
   function flashSaved(statusEl) {
@@ -35,22 +37,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // DotExpander checkbox
+  // DotExpander checkbox — auto-detect on enable
   dotExpanderCheckbox.addEventListener('change', function() {
-    chrome.storage.sync.set({ dotExpanderIntegrationEnabled: dotExpanderCheckbox.checked }, function() {
-      flashSaved(dotExpanderSaveStatus);
-    });
-  });
-
-  // DotExpander extension ID
-  dotExpanderIdInput.addEventListener('change', function() {
-    var id = dotExpanderIdInput.value.trim();
-    if (id) {
-      chrome.storage.sync.set({ dotExpanderExtensionId: id }, function() {
+    if (dotExpanderCheckbox.checked) {
+      detectDotExpander(function(found) {
+        chrome.storage.sync.set({ dotExpanderIntegrationEnabled: found }, function() {
+          if (found) {
+            flashSaved(dotExpanderSaveStatus);
+          } else {
+            dotExpanderCheckbox.checked = false;
+          }
+        });
+      });
+    } else {
+      chrome.storage.sync.set({ dotExpanderIntegrationEnabled: false }, function() {
+        dotExpanderDetectStatus.innerHTML = '';
         flashSaved(dotExpanderSaveStatus);
       });
     }
   });
+
+  function detectDotExpander(callback) {
+    dotExpanderDetectStatus.innerHTML = '<span style="color:#888;">Scanning for DotExpander...</span>';
+    chrome.management.getAll(function(extensions) {
+      var match = extensions.find(function(ext) {
+        var name = ext.name.toLowerCase();
+        return name.includes('dotexpander') || name.includes('dot expander');
+      });
+      if (match && match.enabled) {
+        chrome.storage.sync.set({ dotExpanderExtensionId: match.id });
+        dotExpanderDetectStatus.innerHTML =
+          '<span style="color:#4CAF50;">&#10003; Detected: <strong>' + match.name + '</strong></span>';
+        if (callback) callback(true);
+      } else if (match && !match.enabled) {
+        dotExpanderDetectStatus.innerHTML =
+          '<span style="color:#ff9800;">DotExpander found but disabled. Please enable it in chrome://extensions.</span>';
+        if (callback) callback(false);
+      } else {
+        dotExpanderDetectStatus.innerHTML =
+          '<span style="color:#d32f2f;">DotExpander extension not detected. Please install it first.</span>';
+        if (callback) callback(false);
+      }
+    });
+  }
 
   // Debug mode
   debugCheckbox.addEventListener('change', function() {
