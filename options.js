@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const openEmrSaveStatus = document.getElementById('openemr-save-status');
   const openEmrDomainContainer = document.getElementById('openemr-domain-container');
   const openEmrDomainInput = document.getElementById('openemr-domain-input');
+  const sidebarCheckbox = document.getElementById('sidebar-integration-checkbox');
+  const sidebarSaveStatus = document.getElementById('sidebar-save-status');
+  const sidebarDetectStatus = document.getElementById('sidebar-detect-status');
   const debugCheckbox = document.getElementById('debug-mode-checkbox');
   const debugSaveStatus = document.getElementById('debug-save-status');
 
@@ -21,6 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
     'dotExpanderExtensionId',
     'openEmrIntegrationEnabled',
     'openEmrDomain',
+    'sidebarIntegrationEnabled',
+    'sidebarExtensionId',
     'debugModeEnabled'
   ], function(result) {
     practiceQCheckbox.checked = !!result.practiceQIntegrationEnabled;
@@ -30,9 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (openEmrCheckbox.checked) {
       openEmrDomainContainer.style.display = 'block';
     }
+    sidebarCheckbox.checked = !!result.sidebarIntegrationEnabled;
     debugCheckbox.checked = !!result.debugModeEnabled;
     if (dotExpanderCheckbox.checked) {
       detectDotExpander();
+    }
+    if (sidebarCheckbox.checked) {
+      detectSidebar();
     }
   });
 
@@ -87,6 +96,50 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         dotExpanderDetectStatus.innerHTML =
           '<span style="color:#d32f2f;">DotExpander extension not detected. Please install it first.</span>';
+        if (callback) callback(false);
+      }
+    });
+  }
+
+  // Sidebar checkbox — auto-detect on enable
+  sidebarCheckbox.addEventListener('change', function() {
+    if (sidebarCheckbox.checked) {
+      detectSidebar(function(found) {
+        chrome.storage.sync.set({ sidebarIntegrationEnabled: found }, function() {
+          if (found) {
+            flashSaved(sidebarSaveStatus);
+          } else {
+            sidebarCheckbox.checked = false;
+          }
+        });
+      });
+    } else {
+      chrome.storage.sync.set({ sidebarIntegrationEnabled: false }, function() {
+        sidebarDetectStatus.innerHTML = '';
+        flashSaved(sidebarSaveStatus);
+      });
+    }
+  });
+
+  function detectSidebar(callback) {
+    sidebarDetectStatus.innerHTML = '<span style="color:#888;">Scanning for Doximity Services Sidebar...</span>';
+    chrome.management.getAll(function(extensions) {
+      var match = extensions.find(function(ext) {
+        var name = ext.name.toLowerCase();
+        return name.includes('doximity services sidebar') || name.includes('doximity sidebar');
+      });
+      if (match && match.enabled) {
+        chrome.storage.sync.set({ sidebarExtensionId: match.id });
+        sidebarDetectStatus.innerHTML =
+          '<span style="color:#4CAF50;">&#10003; Detected: <strong>' + match.name + '</strong></span>';
+        if (callback) callback(true);
+      } else if (match && !match.enabled) {
+        sidebarDetectStatus.innerHTML =
+          '<span style="color:#ff9800;">Sidebar extension found but disabled. Please enable it in chrome://extensions.</span>';
+        if (callback) callback(false);
+      } else {
+        sidebarDetectStatus.innerHTML =
+          '<span style="color:#d32f2f;">Doximity Services Sidebar extension not detected. Please install it first.</span>';
         if (callback) callback(false);
       }
     });

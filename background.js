@@ -310,6 +310,47 @@ function syncNoteIds() {
             });
           });
         }
+
+        // Send to Doximity Services Sidebar if integration is enabled
+        if (lastNoteIds.length > 0) {
+          const sidebarNote = notes[0];
+          chrome.storage.sync.get(['sidebarIntegrationEnabled', 'sidebarExtensionId'], function(result) {
+            if (!result.sidebarIntegrationEnabled) return;
+
+            const sidebarDictation = sidebarNote?.body || sidebarNote?.content || sidebarNote?.note_label || "No content available";
+
+            let sidebarTimestamp = Date.now();
+            const sidebarTsField = sidebarNote?.created_at || sidebarNote?.timestamp;
+
+            if (sidebarTsField) {
+              if (typeof sidebarTsField === 'string') {
+                const parsed = Date.parse(sidebarTsField);
+                if (!isNaN(parsed)) sidebarTimestamp = parsed;
+              } else if (typeof sidebarTsField === 'number') {
+                sidebarTimestamp = sidebarTsField < 1e10 ? sidebarTsField * 1000 : sidebarTsField;
+              }
+            }
+
+            const sidebarExtId = result.sidebarExtensionId;
+            if (!sidebarExtId) {
+              debugLog("Sidebar integration enabled but no extension ID configured");
+              return;
+            }
+
+            chrome.runtime.sendMessage(sidebarExtId, {
+              type: 'SEND_VARIABLES',
+              variables: {
+                scribe: { value: sidebarDictation, timestamp: sidebarTimestamp }
+              }
+            }, (response) => {
+              if (chrome.runtime.lastError) {
+                console.error("Error sending to Sidebar:", chrome.runtime.lastError.message);
+              } else {
+                debugLog("Sidebar response:", response);
+              }
+            });
+          });
+        }
       });
     });
   });
