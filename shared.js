@@ -54,6 +54,17 @@ function findDoximityTab(callback) {
         return t.url && t.url.includes('doximity.com/scribe');
       });
     }
+    // Priority 5: any doximity.com page (navigated away from scribe)
+    if (!tab) {
+      tab = tabs.find(function(t) {
+        return t.url && t.url.includes('doximity.com') &&
+          !t.url.includes('doximity.com/session/new') &&
+          !t.url.includes('auth.doximity.com');
+      });
+      if (tab) {
+        tab._needsNavigate = true;
+      }
+    }
     // Exclude login pages
     if (tab && tab.url && (tab.url.includes('doximity.com/session/new') || tab.url.includes('auth.doximity.com'))) {
       callback(null);

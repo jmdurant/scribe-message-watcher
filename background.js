@@ -414,6 +414,11 @@ chrome.commands.onCommand.addListener(function(command) {
           chrome.tabs.sendMessage(visitsTab.id, { type: 'CHECK_AND_TOGGLE_MICROPHONE' }, updateIconFromResponse);
         } else {
           let scribeTab = tabs.find(tab => tab.url && tab.url.includes('doximity.com/scribe'));
+          // Also check for any doximity.com tab that navigated away from scribe
+          if (!scribeTab) {
+            scribeTab = tabs.find(tab => tab.url && tab.url.includes('doximity.com') &&
+              !tab.url.includes('auth.doximity.com') && !tab.url.includes('doximity.com/session/new'));
+          }
           if (scribeTab) {
             chrome.tabs.update(scribeTab.id, { url: 'https://www.doximity.com/scribe/visits/new' }, function() {
               chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {

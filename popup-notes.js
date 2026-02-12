@@ -41,6 +41,27 @@ function fetchNotesAndShow() {
     findDoximityTab(function(tab) {
       if (tab) {
         doximityTabId = tab.id;
+
+        // Tab is on doximity.com but not on /scribe — navigate it back
+        if (tab._needsNavigate) {
+          debugLog('Tab navigated away from Scribe, redirecting to scribe/home');
+          chrome.storage.session.get('lastVisitUuid', function(result) {
+            const targetUrl = result.lastVisitUuid
+              ? 'https://www.doximity.com/scribe/visit_notes/' + result.lastVisitUuid
+              : 'https://www.doximity.com/scribe/home';
+            chrome.tabs.update(tab.id, { url: targetUrl }, function() {
+              chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                  chrome.tabs.onUpdated.removeListener(listener);
+                  // Re-run fetchNotesAndShow now that the tab is on the right page
+                  fetchNotesAndShow();
+                }
+              });
+            });
+          });
+          return;
+        }
+
         if (tab.url && tab.url.match(/\/scribe\/visits\//)) {
           debugLog('On /scribe/visits/*, showing controls only.');
           notesListDiv.innerHTML = '';
