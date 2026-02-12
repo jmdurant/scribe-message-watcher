@@ -105,10 +105,15 @@ To customize shortcuts, go to `chrome://extensions/shortcuts` in your browser.
 
 ### Getting the Result
 
-- Chrome sends a **desktop notification** when the note is ready
+- Chrome sends a **desktop notification** when the note is ready — click **Copy Content** to copy directly from the notification, or **Open Scribed Note** to view it
+- Notifications are suppressed when the Doximity Scribe tab is the active tab (similar to how Gmail skips notifications when the inbox is already on screen)
 - Click the extension icon to see your recent notes
 - Click **Copy** on any note to copy it to your clipboard
 - Paste into your EHR
+
+<p align="center">
+  <img src="popup.png" alt="Desktop notification with Copy Content and Open Scribed Note buttons" width="340">
+</p>
 
 ### With PracticeQ Integration
 
@@ -127,6 +132,7 @@ The extension icon shows the current state at a glance:
 | <img src="recording.png" alt="Recording" height="28"> | Recording in progress |
 | <img src="paused.png" alt="Paused" height="28"> | Recording paused |
 | <img src="completed.png" alt="Completed" height="28"> | Note generated |
+| <img src="new.png" alt="New" height="28"> | New dictation available |
 
 ## EHR Integration Details
 
